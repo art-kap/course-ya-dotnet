@@ -26,4 +26,14 @@ public static class EventMapping
             @event.StartAt,
             @event.EndAt);
     }
+
+    public static EventDto ToDto(this EventPutDto eventPutDto, int id)
+    {
+        return new EventDto(
+            id,
+            eventPutDto.Title,
+            eventPutDto.Description,
+            eventPutDto.StartAt,
+            eventPutDto.EndAt);
+    }
 }

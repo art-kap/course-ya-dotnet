@@ -1,4 +1,5 @@
 using CourseWebApiProject.Interfaces;
+using CourseWebApiProject.Middleware;
 using CourseWebApiProject.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,6 +19,8 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
+
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.UseHttpsRedirection();
 
