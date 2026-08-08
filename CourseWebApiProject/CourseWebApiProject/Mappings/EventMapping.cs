@@ -5,35 +5,25 @@ namespace CourseWebApiProject.Mappings;
 
 public static class EventMapping
 {
-    public static Event ToEvent(this EventDto eventDto)
+    public static Event ToEvent(this EventRequestDto eventRequestDto)
     {
         return new Event
         {
-            Id = eventDto.Id,
-            Title = eventDto.Title,
-            Description = eventDto.Description,
-            StartAt = eventDto.StartAt,
-            EndAt = eventDto.EndAt
+            Id = Guid.NewGuid(),
+            Title = eventRequestDto.Title,
+            Description = eventRequestDto.Description,
+            StartAt = eventRequestDto.StartAt,
+            EndAt = eventRequestDto.EndAt
         };
     }
 
-    public static EventDto ToDto(this Event @event)
+    public static EventResponseDto ToResponseDto(this Event @event)
     {
-        return new EventDto(
+        return new EventResponseDto(
             @event.Id,
             @event.Title,
             @event.Description,
             @event.StartAt,
             @event.EndAt);
-    }
-
-    public static EventDto ToDto(this EventPutDto eventPutDto, int id)
-    {
-        return new EventDto(
-            id,
-            eventPutDto.Title,
-            eventPutDto.Description,
-            eventPutDto.StartAt,
-            eventPutDto.EndAt);
     }
 }

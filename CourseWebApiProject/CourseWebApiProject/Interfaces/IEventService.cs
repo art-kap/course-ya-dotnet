@@ -4,13 +4,13 @@ namespace CourseWebApiProject.Interfaces;
 
 public interface IEventService
 {
-    List<EventDto> GetAllEvents();
+    List<EventResponseDto> GetAllEvents();
 
-    EventDto GetEvent(int eventId);
+    EventResponseDto GetEvent(Guid eventId);
 
-    void AddEvent(EventDto eventDto);
+    EventResponseDto AddEvent(EventRequestDto eventDto);
 
-    void UpdateEvent(EventDto eventDto);
+    void UpdateEvent(Guid eventId, EventRequestDto eventDto);
 
-    void RemoveEvent(int eventId);
+    void RemoveEvent(Guid eventId);
 }
