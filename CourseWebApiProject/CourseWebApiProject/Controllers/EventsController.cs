@@ -51,17 +51,6 @@ public class EventsController(IEventService _eventService): ControllerBase
     [Produces("application/json")]
     public IActionResult Post([FromBody] EventDto eventDto)
     {
-        if (!ModelState.IsValid)
-        {
-            return BadRequest(ModelState);
-        }
-
-        if (eventDto.StartAt >= eventDto.EndAt)
-        {
-            ModelState.AddModelError("EndAt", "Точное время окончания должно быть позже времени начала.");
-            return BadRequest(ModelState);
-        }
-
         _eventService.AddEvent(eventDto);
         return CreatedAtAction(nameof(GetById), new { id = eventDto.Id }, eventDto);
     }
@@ -81,17 +70,6 @@ public class EventsController(IEventService _eventService): ControllerBase
     [Produces("application/json")]
     public IActionResult Put([FromRoute] int id, [FromBody] EventPutDto eventPutDto)
     {
-        if (!ModelState.IsValid)
-        {
-            return BadRequest(ModelState);
-        }
-
-        if (eventPutDto.StartAt >= eventPutDto.EndAt)
-        {
-            ModelState.AddModelError("EndAt", "Точное время окончания должно быть позже времени начала.");
-            return BadRequest(ModelState);
-        }
-
         _eventService.UpdateEvent(eventPutDto.ToDto(id));
         return NoContent();
     }

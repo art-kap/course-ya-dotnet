@@ -29,15 +29,26 @@ public class ExceptionHandlingMiddleware
     {
         context.Response.ContentType = "application/json";
 
-        // По умолчанию возвращаем 500 ошибку
-        var statusCode = HttpStatusCode.InternalServerError;
-        var message = "Внутренняя ошибка сервера. Пожалуйста, попробуйте позже.";
+        HttpStatusCode statusCode;
+        string message;
 
-        // Здесь можно разделять логику для разных типов ваших кастомных исключений
-        if (exception is EventNotFoundException)
+        switch(exception)
         {
-            statusCode = HttpStatusCode.NotFound;
-            message = exception.Message;
+            case EventNotFoundException:
+                statusCode = HttpStatusCode.NotFound;
+                message = exception.Message;
+                break;
+
+            case ArgumentException:
+                statusCode = HttpStatusCode.BadRequest;
+                message = exception.Message;
+                break;
+
+            default:
+                // По умолчанию возвращаем 500 ошибку
+                statusCode = HttpStatusCode.InternalServerError;
+                message = "Внутренняя ошибка сервера. Пожалуйста, попробуйте позже.";
+                break;
         }
 
         context.Response.StatusCode = (int)statusCode;

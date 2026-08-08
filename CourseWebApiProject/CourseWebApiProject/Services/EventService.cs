@@ -12,11 +12,21 @@ public class EventService : IEventService
 
     public void AddEvent(EventDto eventDto)
     {
+        if (eventDto.StartAt >= eventDto.EndAt)
+        {
+            throw new ArgumentException("Точное время окончания должно быть позже времени начала.");
+        }
+
         _events.Add(eventDto.ToEvent());
     }
 
     public void UpdateEvent(EventDto eventDto)
     {
+        if (eventDto.StartAt >= eventDto.EndAt)
+        {
+            throw new ArgumentException("Точное время окончания должно быть позже времени начала.");
+        }
+
         var eventToUpdate = _events.Find(e => e.Id == eventDto.Id) ?? throw new EventNotFoundException(eventDto.Id);
         eventToUpdate.Update(eventDto.Title, eventDto.Description, eventDto.StartAt, eventDto.EndAt);
     }
