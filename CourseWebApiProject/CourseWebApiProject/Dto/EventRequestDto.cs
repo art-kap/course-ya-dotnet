@@ -14,6 +14,6 @@ public record EventRequestDto(
     string Title,
     string? Description,
     [Required(ErrorMessage = "Точное время начала обязательно для заполнения.")]
-    DateTime StartAt,
+    DateTime? StartAt,
     [Required(ErrorMessage = "Точное время окончания обязательно для заполнения.")]
-    DateTime EndAt);
+    DateTime? EndAt);

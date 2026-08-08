@@ -12,8 +12,8 @@ public static class EventMapping
             Id = Guid.NewGuid(),
             Title = eventRequestDto.Title,
             Description = eventRequestDto.Description,
-            StartAt = eventRequestDto.StartAt,
-            EndAt = eventRequestDto.EndAt
+            StartAt = eventRequestDto.StartAt.GetValueOrDefault(),
+            EndAt = eventRequestDto.EndAt.GetValueOrDefault()
         };
     }
 
