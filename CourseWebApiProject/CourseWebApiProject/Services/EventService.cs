@@ -31,7 +31,7 @@ public class EventService : IEventService
         }
 
         var eventToUpdate = _events.Find(e => e.Id == eventId) ?? throw new EventNotFoundException(eventId);
-        eventToUpdate.Update(eventDto.Title, eventDto.Description, eventDto.StartAt.GetValueOrDefault(), eventDto.EndAt.GetValueOrDefault());
+        eventToUpdate.Update(eventDto.Title, eventDto.Description, eventDto.StartAt!.Value, eventDto.EndAt!.Value);
     }
 
     public void RemoveEvent(Guid eventId)
