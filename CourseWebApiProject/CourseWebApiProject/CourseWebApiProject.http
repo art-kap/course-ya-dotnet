@@ -1,6 +1,36 @@
 @CourseWebApiProject_HostAddress = http://localhost:5109
+@id = 00000000-0000-0000-0000-000000000000
 
-GET {{CourseWebApiProject_HostAddress}}/weatherforecast/
+### Get all events
+GET {{CourseWebApiProject_HostAddress}}/events/
+Accept: application/json
+
+### Get event by id
+GET {{CourseWebApiProject_HostAddress}}/events/{{id}}
+Accept: application/json
+
+### Create event
+POST {{CourseWebApiProject_HostAddress}}/events
+Content-Type: application/json
+{
+  "title": "test event",
+  "description": "",
+  "startAt": "2026-08-12T00:00:00",
+  "endAt": "2026-08-13T00:00:00"
+}
+
+### Update event
+PUT {{CourseWebApiProject_HostAddress}}/events/{{id}}
+Content-Type: application/json
+{
+  "title": "updated test event",
+  "description": "updated description",
+  "startAt": "2027-01-01T00:00:00",
+  "endAt": "2027-01-01T00:01:00"
+}
+
+### Delete event
+DELETE {{CourseWebApiProject_HostAddress}}/events/{{id}}
 Accept: application/json
 
 ###
