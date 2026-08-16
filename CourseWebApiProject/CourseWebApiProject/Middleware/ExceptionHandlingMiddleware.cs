@@ -1,17 +1,14 @@
 ﻿using CourseWebApiProject.Exceptions;
+using Microsoft.AspNetCore.Mvc;
 using System.Net;
 using System.Text.Json;
 
 namespace CourseWebApiProject.Middleware;
 
-public class ExceptionHandlingMiddleware
+public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger)
 {
-    private readonly RequestDelegate _next;
-
-    public ExceptionHandlingMiddleware(RequestDelegate next)
-    {
-        _next = next;
-    }
+    private readonly RequestDelegate _next = next;
+    private readonly ILogger _logger = logger;
 
     public async Task InvokeAsync(HttpContext context)
     {
@@ -25,38 +22,45 @@ public class ExceptionHandlingMiddleware
         }
     }
 
-    private static Task HandleExceptionAsync(HttpContext context, Exception exception)
+    private Task HandleExceptionAsync(HttpContext context, Exception exception)
     {
         context.Response.ContentType = "application/json";
 
         HttpStatusCode statusCode;
-        string message;
+        string title, message;
 
         switch(exception)
         {
             case EventNotFoundException:
                 statusCode = HttpStatusCode.NotFound;
+                title = "Событие не найдено.";
                 message = exception.Message;
+                _logger.LogWarning(exception, message);
                 break;
 
             case ArgumentException:
                 statusCode = HttpStatusCode.BadRequest;
+                title = "Недопустимые данные.";
                 message = exception.Message;
+                _logger.LogWarning(exception, message);
                 break;
 
             default:
                 // По умолчанию возвращаем 500 ошибку
                 statusCode = HttpStatusCode.InternalServerError;
+                title = "Непредвиденная ошибка.";
                 message = "Внутренняя ошибка сервера. Пожалуйста, попробуйте позже.";
+                _logger.LogError(exception, "Ошибка 500 при выполнении запроса: {Path}", context.Request.Path);
                 break;
         }
 
         context.Response.StatusCode = (int)statusCode;
 
-        var response = new
+        var response = new ProblemDetails
         {
-            StatusCode = context.Response.StatusCode,
-            Message = message
+            Status = (int)statusCode,
+            Title = title,
+            Detail = message
         };
 
         var jsonResponse = JsonSerializer.Serialize(response);
