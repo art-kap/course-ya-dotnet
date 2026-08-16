@@ -3,6 +3,7 @@ using CourseWebApiProject.Exceptions;
 using CourseWebApiProject.Interfaces;
 using CourseWebApiProject.Mappings;
 using CourseWebApiProject.Models;
+using System.Text.RegularExpressions;
 
 namespace CourseWebApiProject.Services;
 
@@ -40,9 +41,26 @@ public class EventService : IEventService
         _events.Remove(eventToRemove);
     }
 
-    public List<EventResponseDto> GetAllEvents()
+    public List<EventResponseDto> GetEventsByQuery(EventsQuery query)
     {
-        return _events.Select(e => e.ToResponseDto()).ToList();
+        IEnumerable<Event> filteredEvents = _events;
+
+        if (query.Title != null)
+        {
+            filteredEvents = filteredEvents.Where(e => Regex.IsMatch(e.Title, query.Title, RegexOptions.IgnoreCase));
+        }
+
+        if (query.From != null)
+        {
+            filteredEvents = filteredEvents.Where(e => e.StartAt >= query.From.Value);
+        }
+
+        if (query.To != null)
+        {
+            filteredEvents = filteredEvents.Where(e => e.EndAt <= query.To.Value);
+        }
+
+        return filteredEvents.Select(e => e.ToResponseDto()).ToList();
     }
 
     public EventResponseDto GetEvent(Guid eventId)

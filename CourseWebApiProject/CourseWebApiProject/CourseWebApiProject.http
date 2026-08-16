@@ -1,9 +1,16 @@
 @CourseWebApiProject_HostAddress = http://localhost:5109
 @id = 00000000-0000-0000-0000-000000000000
+@title = TEST
+@from = 2026-08-01
+@to = 2026-08-31
 
 ### Get all events
 GET {{CourseWebApiProject_HostAddress}}/events/
 Accept: application/json
+
+### Get events by query
+GET {{CourseWebApiProject_HostAddress}}/events?title={{title}}&from={{from}}&to={{to}}
+Content-Type: application/json
 
 ### Get event by id
 GET {{CourseWebApiProject_HostAddress}}/events/{{id}}

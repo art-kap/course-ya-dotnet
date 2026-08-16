@@ -4,7 +4,7 @@ namespace CourseWebApiProject.Interfaces;
 
 public interface IEventService
 {
-    List<EventResponseDto> GetAllEvents();
+    List<EventResponseDto> GetEventsByQuery(EventsQuery query);
 
     EventResponseDto GetEvent(Guid eventId);
 
