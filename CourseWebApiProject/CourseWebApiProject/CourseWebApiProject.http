@@ -3,6 +3,8 @@
 @title = TEST
 @from = 2026-08-01
 @to = 2026-08-31
+@page = 1
+@pageSize = 3
 
 ### Get all events
 GET {{CourseWebApiProject_HostAddress}}/events/
@@ -10,6 +12,10 @@ Accept: application/json
 
 ### Get events by query
 GET {{CourseWebApiProject_HostAddress}}/events?title={{title}}&from={{from}}&to={{to}}
+Content-Type: application/json
+
+### Get events by page
+GET {{CourseWebApiProject_HostAddress}}/events?page={{page}}&pageSize={{pageSize}}
 Content-Type: application/json
 
 ### Get event by id

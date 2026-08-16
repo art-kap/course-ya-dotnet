@@ -41,7 +41,7 @@ public class EventService : IEventService
         _events.Remove(eventToRemove);
     }
 
-    public List<EventResponseDto> GetEventsByQuery(EventsQuery query)
+    public PaginatedResult GetEventsByQuery(EventsQuery query)
     {
         IEnumerable<Event> filteredEvents = _events;
 
@@ -60,7 +60,11 @@ public class EventService : IEventService
             filteredEvents = filteredEvents.Where(e => e.EndAt <= query.To.Value);
         }
 
-        return filteredEvents.Select(e => e.ToResponseDto()).ToList();
+        var eventsCount = filteredEvents.Count();
+        var currentPageEvents = filteredEvents.Skip((query.Page - 1) * query.PageSize).Take(query.PageSize);
+        var eventsArray = currentPageEvents.Select(e => e.ToResponseDto()).ToArray();
+
+        return new PaginatedResult(eventsCount, eventsArray, query.Page, eventsArray.Length);
     }
 
     public EventResponseDto GetEvent(Guid eventId)

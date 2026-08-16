@@ -16,9 +16,9 @@ public class EventsController(IEventService _eventService): ControllerBase
     /// </summary>
     /// <response code="200">Возвращается в случае успешного ответа</response>
     [HttpGet]
-    [ProducesResponseType(typeof(List<EventResponseDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(PaginatedResult), StatusCodes.Status200OK)]
     [Produces("application/json")]
-    public ActionResult<List<EventResponseDto>> GetAll([FromQuery] EventsQuery query)
+    public ActionResult<PaginatedResult> GetAll([FromQuery] EventsQuery query)
     {
         return Ok(_eventService.GetEventsByQuery(query));
     }
