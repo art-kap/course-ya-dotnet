@@ -1,3 +1,4 @@
 <Solution>
+  <Project Path="CourseWebApiProject.Tests/CourseWebApiProject.Tests.csproj" Id="aead8ddd-7d3d-4787-a3c0-b0f5f0a1da1e" />
   <Project Path="CourseWebApiProject/CourseWebApiProject.csproj" />
 </Solution>
