@@ -12,15 +12,15 @@ namespace CourseWebApiProject.Controllers;
 public class EventsController(IEventService _eventService): ControllerBase
 {
     /// <summary>
-    /// Получить список всех событий
+    /// Получить список событий по фильтру
     /// </summary>
     /// <response code="200">Возвращается в случае успешного ответа</response>
     [HttpGet]
-    [ProducesResponseType(typeof(List<EventResponseDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(PaginatedResult), StatusCodes.Status200OK)]
     [Produces("application/json")]
-    public ActionResult<List<EventResponseDto>> GetAll()
+    public ActionResult<PaginatedResult> GetAll([FromQuery] EventsQuery query)
     {
-        return Ok(_eventService.GetAllEvents());
+        return Ok(_eventService.GetEventsByQuery(query));
     }
 
     /// <summary>

@@ -31,7 +31,7 @@ public class EventService : IEventService
         }
 
         var eventToUpdate = _events.Find(e => e.Id == eventId) ?? throw new EventNotFoundException(eventId);
-        eventToUpdate.Update(eventDto.Title, eventDto.Description, eventDto.StartAt.GetValueOrDefault(), eventDto.EndAt.GetValueOrDefault());
+        eventToUpdate.Update(eventDto.Title, eventDto.Description, eventDto.StartAt!.Value, eventDto.EndAt!.Value);
     }
 
     public void RemoveEvent(Guid eventId)
@@ -40,9 +40,30 @@ public class EventService : IEventService
         _events.Remove(eventToRemove);
     }
 
-    public List<EventResponseDto> GetAllEvents()
+    public PaginatedResult GetEventsByQuery(EventsQuery query)
     {
-        return _events.Select(e => e.ToResponseDto()).ToList();
+        IEnumerable<Event> filteredEvents = _events;
+
+        if (query.Title != null)
+        {
+            filteredEvents = filteredEvents.Where(e => e.Title.Contains(query.Title, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (query.From != null)
+        {
+            filteredEvents = filteredEvents.Where(e => e.StartAt >= query.From.Value);
+        }
+
+        if (query.To != null)
+        {
+            filteredEvents = filteredEvents.Where(e => e.EndAt <= query.To.Value);
+        }
+
+        var eventsCount = filteredEvents.Count();
+        var currentPageEvents = filteredEvents.Skip((query.Page - 1) * query.PageSize).Take(query.PageSize);
+        var eventsArray = currentPageEvents.Select(e => e.ToResponseDto()).ToArray();
+
+        return new PaginatedResult(eventsCount, eventsArray, query.Page, eventsArray.Length);
     }
 
     public EventResponseDto GetEvent(Guid eventId)
