@@ -66,7 +66,7 @@ public class EventServiceTests
     }
 
     [Fact]
-    public void Get_NonExistingId_ShouldThrowEventNonFoundException()
+    public void Get_NonExistingId_ShouldThrowEventNotFoundException()
     {
         // Arrange
         var validEvent = GetValidEvent();
@@ -95,7 +95,7 @@ public class EventServiceTests
     }
 
     [Fact]
-    public void Update_NonExistingId_ShouldThrowEventNonFoundException()
+    public void Update_NonExistingId_ShouldThrowEventNotFoundException()
     {
         // Arrange
         var validEvent = GetValidEvent();
@@ -134,7 +134,7 @@ public class EventServiceTests
     }
 
     [Fact]
-    public void Remove_NonExistingId_ShouldThrowEventNonFoundException()
+    public void Remove_NonExistingId_ShouldThrowEventNotFoundException()
     {
         // Arrange
         var validEvent = GetValidEvent();

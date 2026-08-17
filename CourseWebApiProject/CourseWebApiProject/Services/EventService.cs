@@ -3,7 +3,6 @@ using CourseWebApiProject.Exceptions;
 using CourseWebApiProject.Interfaces;
 using CourseWebApiProject.Mappings;
 using CourseWebApiProject.Models;
-using System.Text.RegularExpressions;
 
 namespace CourseWebApiProject.Services;
 
@@ -47,7 +46,7 @@ public class EventService : IEventService
 
         if (query.Title != null)
         {
-            filteredEvents = filteredEvents.Where(e => Regex.IsMatch(e.Title, query.Title, RegexOptions.IgnoreCase));
+            filteredEvents = filteredEvents.Where(e => e.Title.Contains(query.Title, StringComparison.OrdinalIgnoreCase));
         }
 
         if (query.From != null)
