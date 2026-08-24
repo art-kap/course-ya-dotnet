@@ -1,5 +1,6 @@
 ﻿using CourseWebApiProject.Dto;
 using CourseWebApiProject.Exceptions;
+using CourseWebApiProject.Repository;
 using CourseWebApiProject.Services;
 using FluentAssertions;
 
@@ -19,7 +20,7 @@ public class EventServiceTests
 
     public EventServiceTests()
     {
-        _eventService = new EventService();
+        _eventService = new EventService(new InMemoryEventStore());
 
         _startAt = DateTime.Now;
         _endAtValid = _startAt.AddHours(1);
