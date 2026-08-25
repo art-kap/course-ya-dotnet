@@ -46,4 +46,12 @@ Content-Type: application/json
 DELETE {{CourseWebApiProject_HostAddress}}/events/{{id}}
 Accept: application/json
 
+### Create booking
+POST {{CourseWebApiProject_HostAddress}}/events/{{id}}/book
+Accept: application/json
+
+### Get booking by id
+GET {{CourseWebApiProject_HostAddress}}/bookings/{{id}}
+Accept: application/json
+
 ###

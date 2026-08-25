@@ -9,7 +9,7 @@ namespace CourseWebApiProject.Controllers;
 /// </summary>
 [ApiController]
 [Route("events")]
-public class EventsController(IEventService _eventService): ControllerBase
+public class EventsController(IEventService _eventService, IBookingService _bookingService) : ControllerBase
 {
     /// <summary>
     /// Получить список событий по фильтру
@@ -87,5 +87,24 @@ public class EventsController(IEventService _eventService): ControllerBase
     {
         _eventService.RemoveEvent(id);
         return NoContent();
+    }
+
+    /// <summary>
+    /// Создать бронь
+    /// </summary>
+    /// <param name="id">id события</param>
+    /// <response code="202">Возвращается в случае успешного создания брони</response>
+    /// <response code="404">Возвращается, если если нет события с данным id</response>
+    [HttpPost("{id:Guid}/book")]
+    [ProducesResponseType(typeof(BookingInfo), StatusCodes.Status202Accepted)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [Produces("application/json")]
+    public async Task<ActionResult<BookingInfo>> Post([FromRoute] Guid id)
+    {
+        var bookingInfo = await _bookingService.CreateBookingAsync(id);
+        var resourceUrl = Url.Action(nameof(BookingsController.GetById), "Bookings", new { id = bookingInfo.Id });
+        Response.Headers.Location = resourceUrl;
+
+        return Accepted(bookingInfo);
     }
 }
