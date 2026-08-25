@@ -31,9 +31,9 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
 
         switch(exception)
         {
-            case EventNotFoundException:
+            case EntityNotFoundException:
                 statusCode = HttpStatusCode.NotFound;
-                title = "Событие не найдено.";
+                title = "Ресурс не найден.";
                 message = exception.Message;
                 _logger.LogWarning(exception, message);
                 break;

@@ -1,19 +1,21 @@
 ﻿using CourseWebApiProject.Interfaces;
 using CourseWebApiProject.Models;
+using System.Collections.Concurrent;
 
 namespace CourseWebApiProject.Repository;
 
 public class InMemoryBookingStore : IBookingRepository
 {
-    private readonly List<Booking> _bookings = [];
+    private readonly ConcurrentDictionary<Guid, Booking> _bookings = new();
 
-    public void Add(Booking booking)
+    public async Task AddAsync(Booking booking)
     {
-        _bookings.Add(booking);
+        _bookings.TryAdd(booking.Id, booking);
     }
 
-    public Booking? FindById(Guid bookingId)
+    public async Task<Booking?> FindByIdAsync(Guid bookingId)
     {
-        return _bookings.Find(b => b.Id == bookingId);
+        _bookings.TryGetValue(bookingId, out var booking);
+        return booking;
     }
 }

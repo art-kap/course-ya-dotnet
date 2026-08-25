@@ -4,7 +4,7 @@ namespace CourseWebApiProject.Interfaces;
 
 public interface IBookingRepository
 {
-    void Add(Booking booking);
+    Task AddAsync(Booking booking);
 
-    Booking? FindById(Guid bookingId);
+    Task<Booking?> FindByIdAsync(Guid bookingId);
 }

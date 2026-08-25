@@ -13,4 +13,6 @@ public interface IEventRepository
     IReadOnlyCollection<Event> GetAll();
 
     Event? FindById(Guid eventId);
+
+    bool ContainsId(Guid eventId);
 }

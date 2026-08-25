@@ -43,4 +43,9 @@ public class InMemoryEventStore : IEventRepository
             _events[index] = @event;
         }
     }
+
+    public bool ContainsId(Guid eventId) 
+    {
+        return _events.Any(e => e.Id == eventId);
+    }
 }
