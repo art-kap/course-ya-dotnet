@@ -18,4 +18,17 @@ public class InMemoryBookingStore : IBookingRepository
         _bookings.TryGetValue(bookingId, out var booking);
         return booking;
     }
+
+    public async Task<IReadOnlyCollection<Booking>> GetAllAsync()
+    {
+        return _bookings.Values.ToList();
+    }
+
+    public async Task UpdateAsync(Booking booking)
+    {
+        if (_bookings.ContainsKey(booking.Id))
+        {
+            _bookings[booking.Id] = booking;
+        }
+    }
 }

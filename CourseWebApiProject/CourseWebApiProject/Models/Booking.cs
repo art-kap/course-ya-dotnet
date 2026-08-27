@@ -18,4 +18,10 @@ public class Booking
             CreatedAt = DateTime.Now
         };
     }
+
+    public void Confirm()
+    {
+        Status = BookingStatus.Confirmed;
+        ProcessedAt = DateTime.Now;
+    }
 }
