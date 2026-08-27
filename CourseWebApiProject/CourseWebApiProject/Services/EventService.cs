@@ -6,9 +6,9 @@ using CourseWebApiProject.Models;
 
 namespace CourseWebApiProject.Services;
 
-public class EventService : IEventService
+public class EventService(IEventRepository eventRepository) : IEventService
 {
-    private List<Event> _events = [];
+    private readonly IEventRepository _eventRepository = eventRepository;
 
     public EventResponseDto AddEvent(EventRequestDto eventDto)
     {
@@ -18,7 +18,7 @@ public class EventService : IEventService
         }
 
         var newEvent = eventDto.ToEvent();
-        _events.Add(newEvent);
+        _eventRepository.Add(newEvent);
 
         return newEvent.ToResponseDto();
     }
@@ -30,19 +30,22 @@ public class EventService : IEventService
             throw new ArgumentException("Точное время окончания должно быть позже времени начала.");
         }
 
-        var eventToUpdate = _events.Find(e => e.Id == eventId) ?? throw new EventNotFoundException(eventId);
+        var eventToUpdate = _eventRepository.FindById(eventId) ?? throw new EventNotFoundException(eventId);
         eventToUpdate.Update(eventDto.Title, eventDto.Description, eventDto.StartAt!.Value, eventDto.EndAt!.Value);
+        _eventRepository.Update(eventToUpdate);
     }
 
     public void RemoveEvent(Guid eventId)
     {
-        var eventToRemove = _events.Find(e => e.Id == eventId) ?? throw new EventNotFoundException(eventId);
-        _events.Remove(eventToRemove);
+        if (!_eventRepository.RemoveById(eventId))
+        {
+            throw new EventNotFoundException(eventId);
+        }
     }
 
     public PaginatedResult GetEventsByQuery(EventsQuery query)
     {
-        IEnumerable<Event> filteredEvents = _events;
+        IEnumerable<Event> filteredEvents = _eventRepository.GetAll();
 
         if (query.Title != null)
         {
@@ -68,7 +71,7 @@ public class EventService : IEventService
 
     public EventResponseDto GetEvent(Guid eventId)
     {
-        var eventToGet = _events.Find(e => e.Id == eventId) ?? throw new EventNotFoundException(eventId);
+        var eventToGet = _eventRepository.FindById(eventId) ?? throw new EventNotFoundException(eventId);
         return eventToGet.ToResponseDto();
     }
 }

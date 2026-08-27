@@ -1,12 +1,12 @@
 ﻿namespace CourseWebApiProject.Models;
 
-public class Event
+public class Event(string title, string? description, DateTime startAt, DateTime endAt)
 {
-    public Guid Id { get; set; }
-    public string Title { get; set; } = string.Empty;
-    public string? Description { get; set; }
-    public DateTime StartAt { get; set; }
-    public DateTime EndAt { get; set; }
+    public Guid Id { get; private set; } = Guid.NewGuid();
+    public string Title { get; private set; } = title;
+    public string? Description { get; private set; } = description;
+    public DateTime StartAt { get; private set; } = startAt;
+    public DateTime EndAt { get; private set; } = endAt;
 
     public void Update(string title, string? description, DateTime startAt, DateTime endAt)
     {

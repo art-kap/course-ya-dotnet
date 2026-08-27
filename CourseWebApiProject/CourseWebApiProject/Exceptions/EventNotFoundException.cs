@@ -1,7 +1,5 @@
-﻿namespace CourseWebApiProject.Exceptions
+﻿namespace CourseWebApiProject.Exceptions;
+
+public class EventNotFoundException(Guid eventId) : EntityNotFoundException("Событие", eventId)
 {
-    public class EventNotFoundException : Exception
-    {
-        public EventNotFoundException(Guid eventId) : base($"Событие с id={eventId} не найдено.") { }
-    }
 }
