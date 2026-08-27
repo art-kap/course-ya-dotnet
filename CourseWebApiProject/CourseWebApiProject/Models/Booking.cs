@@ -2,11 +2,11 @@
 
 public class Booking
 {
-    public Guid Id { get; set; }
-    public Guid EventId { get; set; }
-    public BookingStatus Status { get; set; }
-    public DateTime CreatedAt { get; set; }
-    public DateTime? ProcessedAt { get; set; }
+    public Guid Id { get; private set; }
+    public Guid EventId { get; private set; }
+    public BookingStatus Status { get; private set; }
+    public DateTime CreatedAt { get; private set; }
+    public DateTime? ProcessedAt { get; private set; }
 
     public static Booking Create(Guid eventId)
     {
@@ -22,6 +22,12 @@ public class Booking
     public void Confirm()
     {
         Status = BookingStatus.Confirmed;
+        ProcessedAt = DateTime.Now;
+    }
+
+    public void Reject()
+    {
+        Status = BookingStatus.Rejected;
         ProcessedAt = DateTime.Now;
     }
 }

@@ -46,20 +46,13 @@ public static class EventsTestsHelper
         ];
     }
 
-    public static Event GetEventWithId(Guid id, EventRequestDto eventRequestDto)
-    {
-        var newEvent = eventRequestDto.ToEvent();
-        newEvent.Id = id;
-        return newEvent;
-    }
-
     public static Event GetValidEvent()
     {
-        return GetEventWithId(Guid.NewGuid(), GetValidEventDto());
+        return GetValidEventDto().ToEvent();
     }
 
-    public static Event GetAnotherValidEvent(Guid id)
+    public static Event GetAnotherValidEvent()
     {
-        return GetEventWithId(id, GetValidEventDto());
+        return GetAnotherValidEventDto().ToEvent();
     }
 }

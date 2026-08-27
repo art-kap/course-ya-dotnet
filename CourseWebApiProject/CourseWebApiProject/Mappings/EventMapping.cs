@@ -7,14 +7,11 @@ public static class EventMapping
 {
     public static Event ToEvent(this EventRequestDto eventRequestDto)
     {
-        return new Event
-        {
-            Id = Guid.NewGuid(),
-            Title = eventRequestDto.Title,
-            Description = eventRequestDto.Description,
-            StartAt = eventRequestDto.StartAt!.Value,
-            EndAt = eventRequestDto.EndAt!.Value
-        };
+        return new Event(
+            eventRequestDto.Title,
+            eventRequestDto.Description,
+            eventRequestDto.StartAt!.Value,
+            eventRequestDto.EndAt!.Value);
     }
 
     public static EventResponseDto ToResponseDto(this Event @event)

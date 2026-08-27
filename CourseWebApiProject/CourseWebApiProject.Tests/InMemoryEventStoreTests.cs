@@ -45,18 +45,20 @@ public class InMemoryEventStoreTests
     public void Update_ExistingId_Success()
     {
         // Arrange
-        var eventToAdd = EventsTestsHelper.GetValidEvent();
-        var id = eventToAdd.Id;
-        _inMemoryEventStore.Add(eventToAdd);
-        var eventDataToUpdate = EventsTestsHelper.GetAnotherValidEvent(id);
+        var eventToUpdate = EventsTestsHelper.GetValidEvent();
+        var id = eventToUpdate.Id;
+        _inMemoryEventStore.Add(eventToUpdate);
+
+        var timeNow = DateTime.Now;
+        eventToUpdate.Update("Updated Title", "Updated Description", timeNow, timeNow.AddHours(1));
 
         // Act
-        _inMemoryEventStore.Update(eventDataToUpdate);
+        _inMemoryEventStore.Update(eventToUpdate);
         var response = _inMemoryEventStore.FindById(id);
 
         // Assert
         response.Should().NotBeNull();
-        response.Should().BeEquivalentTo(eventDataToUpdate);
+        response.Should().BeEquivalentTo(eventToUpdate);
     }
 
     [Fact]
@@ -67,7 +69,7 @@ public class InMemoryEventStoreTests
         var existingId = eventToAdd.Id;
         var nonExistingId = Guid.NewGuid();
         _inMemoryEventStore.Add(eventToAdd);
-        var eventDataToUpdate = EventsTestsHelper.GetAnotherValidEvent(nonExistingId);
+        var eventDataToUpdate = EventsTestsHelper.GetAnotherValidEvent();
 
         // Act
         _inMemoryEventStore.Update(eventDataToUpdate);

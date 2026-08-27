@@ -8,27 +8,30 @@ public class InMemoryBookingStore : IBookingRepository
 {
     private readonly ConcurrentDictionary<Guid, Booking> _bookings = new();
 
-    public async Task AddAsync(Booking booking)
+    public Task AddAsync(Booking booking)
     {
         _bookings.TryAdd(booking.Id, booking);
+        return Task.CompletedTask;
     }
 
-    public async Task<Booking?> FindByIdAsync(Guid bookingId)
+    public Task<Booking?> FindByIdAsync(Guid bookingId)
     {
         _bookings.TryGetValue(bookingId, out var booking);
-        return booking;
+        return Task.FromResult(booking);
     }
 
-    public async Task<IReadOnlyCollection<Booking>> GetAllAsync()
+    public Task<IReadOnlyCollection<Booking>> GetAllAsync()
     {
-        return _bookings.Values.ToList();
+        return Task.FromResult<IReadOnlyCollection<Booking>>(_bookings.Values.ToList());
     }
 
-    public async Task UpdateAsync(Booking booking)
+    public Task UpdateAsync(Booking booking)
     {
         if (_bookings.ContainsKey(booking.Id))
         {
             _bookings[booking.Id] = booking;
         }
+
+        return Task.CompletedTask;
     }
 }

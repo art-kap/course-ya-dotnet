@@ -10,6 +10,8 @@ public static class BookingMapping
         return new BookingInfo(
             booking.Id,
             booking.EventId,
-            (int)booking.Status);
+            (int)booking.Status,
+            booking.CreatedAt,
+            booking.ProcessedAt);
     }
 }

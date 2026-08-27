@@ -62,11 +62,7 @@ public class InMemoryBookingStoreTests
 
         // Assert
         response.Should().NotBeNull();
-        response.Id.Should().Be(bookingId);
-        response.EventId.Should().Be(eventId);
-        response.Status.Should().Be(BookingStatus.Confirmed);
-        response.CreatedAt.Should().Be(createdAt);
-        response.ProcessedAt.Should().BeAfter(createdAt);
+        response.Should().BeEquivalentTo(bookingToAdd);
     }
 
     [Fact]

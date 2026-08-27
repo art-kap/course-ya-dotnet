@@ -1,6 +1,7 @@
 ﻿using CourseWebApiProject.Dto;
 using CourseWebApiProject.Exceptions;
 using CourseWebApiProject.Interfaces;
+using CourseWebApiProject.Mappings;
 using CourseWebApiProject.Models;
 using CourseWebApiProject.Services;
 using Moq;
@@ -45,12 +46,9 @@ public class EventServiceTests
     public void Get_ExistingId_ShouldCallFindByIdOnce()
     {
         // Arrange
-        var validEvent = EventsTestsHelper.GetValidEventDto();
-        var id = _eventService.AddEvent(validEvent).Id;
-        var validEventWithId = new Event { Id = id };
-        validEventWithId.Update(validEvent.Title, validEvent.Description, validEvent.StartAt!.Value, validEvent.EndAt!.Value);
-
-        _mockRepository.Setup(repo => repo.FindById(id)).Returns(validEventWithId);
+        var validEvent = EventsTestsHelper.GetValidEvent();
+        var id = validEvent.Id;
+        _mockRepository.Setup(repo => repo.FindById(id)).Returns(validEvent);
 
         // Act
         var response = _eventService.GetEvent(id);
@@ -75,15 +73,14 @@ public class EventServiceTests
     public void Update_ExistingId_ShouldCallUpdateOnce()
     {
         // Arrange
-        var validEvent = EventsTestsHelper.GetValidEventDto();
-        var id = _eventService.AddEvent(validEvent).Id;
-        var anotherValidEvent = EventsTestsHelper.GetAnotherValidEventDto();
-        var anotherValidEventWithId = EventsTestsHelper.GetEventWithId(id, anotherValidEvent);
+        var validEvent = EventsTestsHelper.GetValidEvent();
+        var id = validEvent.Id;
+        var anotherValidEventDto = EventsTestsHelper.GetAnotherValidEventDto();
 
-        _mockRepository.Setup(repo => repo.FindById(id)).Returns(anotherValidEventWithId);
+        _mockRepository.Setup(repo => repo.FindById(id)).Returns(validEvent);
 
         // Act
-        _eventService.UpdateEvent(id, anotherValidEvent);
+        _eventService.UpdateEvent(id, anotherValidEventDto);
 
         // Assert
         _mockRepository.Verify(repo => repo.Update(It.IsAny<Event>()), Times.Once);
@@ -148,7 +145,7 @@ public class EventServiceTests
         // Arrange
         var events = EventsTestsHelper.GetThreeTestEventDtos(DateTime.Now);
         var returnedEvents = new List<Event>();
-        events.ForEach(e => returnedEvents.Add(EventsTestsHelper.GetEventWithId(_eventService.AddEvent(e).Id, e)));
+        events.ForEach(e => returnedEvents.Add(e.ToEvent()));
         var emptyQuery = new EventsQuery(null, null, null, 1, events.Count);
 
         _mockRepository.Setup(repo => repo.GetAll()).Returns(returnedEvents);

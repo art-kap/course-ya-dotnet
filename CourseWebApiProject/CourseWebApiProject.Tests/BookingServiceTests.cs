@@ -63,6 +63,37 @@ public class BookingServiceTests
     }
 
     [Fact]
+    public async Task Change_BookingStatus_ShouldReturnActualStatus()
+    {
+        // Arrange
+        var eventId = Guid.NewGuid();
+        var booking = Booking.Create(eventId);
+        var bookingId = booking.Id;
+
+        _mockEventRepository.Setup(repo => repo.ContainsId(eventId)).Returns(true);        
+        _mockBookingRepository.Setup(repo => repo.FindByIdAsync(bookingId)).ReturnsAsync(booking);
+
+        // Act
+        var initResponse = await _bookingService.GetBookingByIdAsync(bookingId);
+        var initStatus = initResponse.Status;
+
+        booking.Confirm();
+
+        var responseAfterConfirm = await _bookingService.GetBookingByIdAsync(bookingId);
+        var statusAfterConfirm = responseAfterConfirm.Status;
+
+        booking.Reject();
+
+        var responseAfterReject = await _bookingService.GetBookingByIdAsync(bookingId);
+        var statusAfterReject = responseAfterReject.Status;
+
+        // Assert
+        initStatus.Should().Be((int)BookingStatus.Pending);
+        statusAfterConfirm.Should().Be((int)BookingStatus.Confirmed);
+        statusAfterReject.Should().Be((int)BookingStatus.Rejected);
+    }
+
+    [Fact]
     public async Task Get_NonExistingId_ShouldThrowBookingNotFoundException()
     {
         // Arrange
