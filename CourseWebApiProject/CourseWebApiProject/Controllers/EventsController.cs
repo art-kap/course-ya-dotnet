@@ -95,9 +95,11 @@ public class EventsController(IEventService _eventService, IBookingService _book
     /// <param name="id">id события</param>
     /// <response code="202">Возвращается в случае успешного создания брони</response>
     /// <response code="404">Возвращается, если если нет события с данным id</response>
+    /// <response code="409">Возвращается, если отказано в бронировании</response>
     [HttpPost("{id:Guid}/book")]
     [ProducesResponseType(typeof(BookingInfo), StatusCodes.Status202Accepted)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     [Produces("application/json")]
     public async Task<ActionResult<BookingInfo>> Post([FromRoute] Guid id)
     {

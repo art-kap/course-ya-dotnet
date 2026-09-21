@@ -24,8 +24,9 @@ public class BookingServiceTests
     public async Task Create_Booking_ShouldCallAddOnce()
     {
         // Arrange
-        var eventId = Guid.NewGuid();
-        _mockEventRepository.Setup(repo => repo.ContainsId(eventId)).Returns(true);
+        var @event = EventsTestsHelper.GetValidEvent();
+        var eventId = @event.Id;
+        _mockEventRepository.Setup(repo => repo.FindById(eventId)).Returns(@event);
 
         // Act
         var response = await _bookingService.CreateBookingAsync(eventId);
@@ -39,8 +40,9 @@ public class BookingServiceTests
     public async Task Create_TwoBookings_ShouldCreateDifferentIds()
     {
         // Arrange
-        var eventId = Guid.NewGuid();
-        _mockEventRepository.Setup(repo => repo.ContainsId(eventId)).Returns(true);
+        var @event = EventsTestsHelper.GetValidEvent();
+        var eventId = @event.Id;
+        _mockEventRepository.Setup(repo => repo.FindById(eventId)).Returns(@event);
 
         // Act
         var firstResponse = await _bookingService.CreateBookingAsync(eventId);
@@ -97,8 +99,9 @@ public class BookingServiceTests
     public async Task Get_NonExistingId_ShouldThrowBookingNotFoundException()
     {
         // Arrange
-        var eventId = Guid.NewGuid();
-        _mockEventRepository.Setup(repo => repo.ContainsId(eventId)).Returns(true);
+        var @event = EventsTestsHelper.GetValidEvent();
+        var eventId = @event.Id;
+        _mockEventRepository.Setup(repo => repo.FindById(eventId)).Returns(@event);
         var response = await _bookingService.CreateBookingAsync(eventId);
         var nonExistingId = Guid.NewGuid();
 
