@@ -43,6 +43,16 @@ public class EventServiceTests
     }
 
     [Fact]
+    public void Add_EventWithInvalidTotalSeats_ShouldThrowArgumentException()
+    {
+        // Arrange
+        var invalidEvent = EventsTestsHelper.GetEventDtoWithInvalidTotalSeats();
+
+        // Act & Assert
+        Assert.Throws<ArgumentException>(() => _eventService.AddEvent(invalidEvent));
+    }
+
+    [Fact]
     public void Get_ExistingId_ShouldCallFindByIdOnce()
     {
         // Arrange
@@ -134,6 +144,18 @@ public class EventServiceTests
         var validEvent = EventsTestsHelper.GetValidEventDto();
         var id = _eventService.AddEvent(validEvent).Id;
         var invalidEvent = EventsTestsHelper.GetEventDtoWithInvalidDates();
+
+        // Act & Assert
+        Assert.Throws<ArgumentException>(() => _eventService.UpdateEvent(id, invalidEvent));
+    }
+
+    [Fact]
+    public void Update_InvalidTotalSeats_ShouldThrowArgumentException()
+    {
+        // Arrange
+        var validEvent = EventsTestsHelper.GetValidEventDto();
+        var id = _eventService.AddEvent(validEvent).Id;
+        var invalidEvent = EventsTestsHelper.GetEventDtoWithInvalidTotalSeats();
 
         // Act & Assert
         Assert.Throws<ArgumentException>(() => _eventService.UpdateEvent(id, invalidEvent));
