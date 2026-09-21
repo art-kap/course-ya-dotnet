@@ -25,6 +25,11 @@ public class InMemoryBookingStore : IBookingRepository
         return Task.FromResult<IReadOnlyCollection<Booking>>(_bookings.Values.ToList());
     }
 
+    public Task<IReadOnlyCollection<Booking>> GetPendingAsync()
+    {
+        return Task.FromResult<IReadOnlyCollection<Booking>>(_bookings.Values.Where(b => b.Status == BookingStatus.Pending).ToList());
+    }
+
     public Task UpdateAsync(Booking booking)
     {
         if (_bookings.ContainsKey(booking.Id))

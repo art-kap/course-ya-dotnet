@@ -16,13 +16,14 @@ public class BookingIntegrationTests
     private readonly BookingService _bookingService;
     private readonly EventService _eventService;
     private readonly IBookingRepository _bookingRepository;
+    private readonly IEventRepository _eventRepository;
 
     public BookingIntegrationTests()
     {
-        var eventRepository = new InMemoryEventStore();
         _bookingRepository = new InMemoryBookingStore();
-        _bookingService = new BookingService(_bookingRepository, eventRepository);
-        _eventService = new EventService(eventRepository);
+        _eventRepository = new InMemoryEventStore();
+        _bookingService = new BookingService(_bookingRepository, _eventRepository);
+        _eventService = new EventService(_eventRepository);
     }
 
     [Fact]
@@ -94,6 +95,7 @@ public class BookingIntegrationTests
         IServiceCollection services = new ServiceCollection();
         services.AddSingleton(new Mock<ILogger<BookingBackgroundService>>().Object);
         services.AddSingleton(_bookingRepository);
+        services.AddSingleton(_eventRepository);
         services.AddHostedService<BookingBackgroundService>();
         var serviceProvider = services.BuildServiceProvider();
 

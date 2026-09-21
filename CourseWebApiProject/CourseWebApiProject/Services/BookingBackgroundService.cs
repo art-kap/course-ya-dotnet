@@ -3,11 +3,22 @@ using CourseWebApiProject.Models;
 
 namespace CourseWebApiProject.Services;
 
-public class BookingBackgroundService(IServiceScopeFactory scopeFactory, 
-    ILogger<BookingBackgroundService> logger) : BackgroundService
+public class BookingBackgroundService : BackgroundService
 {
-    private readonly IServiceScopeFactory _scopeFactory = scopeFactory;
-    private readonly ILogger _logger = logger;
+    private readonly IBookingRepository _bookingStore;
+    private readonly IEventRepository _eventStore;
+    private readonly ILogger _logger;
+    private readonly SemaphoreSlim _processingSemaphore = new(1, 1);
+
+    public BookingBackgroundService(IServiceScopeFactory scopeFactory, ILogger<BookingBackgroundService> logger)
+    {
+        using var scope = scopeFactory.CreateScope();
+
+        _bookingStore = scope.ServiceProvider.GetRequiredService<IBookingRepository>();
+        _eventStore = scope.ServiceProvider.GetRequiredService<IEventRepository>();
+
+        _logger = logger;
+    }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -15,44 +26,64 @@ public class BookingBackgroundService(IServiceScopeFactory scopeFactory,
 
         while (!stoppingToken.IsCancellationRequested)
         {
-            try
-            {
-                using var scope = _scopeFactory.CreateScope();
-                var bookingRepository = scope.ServiceProvider.GetRequiredService<IBookingRepository>();
+            var pendingBookings = await _bookingStore.GetPendingAsync();
+            var tasks = pendingBookings.Select(booking => ProcessBookingAsync(booking, stoppingToken));
 
-                var bookings = await bookingRepository.GetAllAsync();
-                var pendingBookings = bookings.Where(b => b.Status == BookingStatus.Pending);
-
-                foreach (var booking in pendingBookings)
-                {
-                    stoppingToken.ThrowIfCancellationRequested();
-
-                    _logger.LogInformation($"Начато оформление бронирования {booking.Id}");
-
-                    // Имитация обработки бронирования
-                    await Task.Delay(TimeSpan.FromSeconds(2), stoppingToken);
-
-                    booking.Confirm();
-                    await bookingRepository.UpdateAsync(booking);
-
-                    _logger.LogInformation($"Бронирование {booking.Id} оформлено.");
-                }
-            }
-            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
-            {
-                // Штатная остановка, выходим из цикла
-                _logger.LogInformation("Бронирование отменено.");
-                break;
-            }
-            catch (Exception ex)
-            {
-                // Продолжаем цикл после паузы
-                _logger.LogError(ex, "Ошибка при обработке задачи");
-            }
-
+            await Task.WhenAll(tasks);
             await Task.Delay(TimeSpan.FromSeconds(1), stoppingToken);
         }
 
         _logger.LogInformation("Фоновый сервис завершает работу.");
+    }
+
+    private async Task ProcessBookingAsync(Booking booking, CancellationToken stoppingToken)
+    {
+        stoppingToken.ThrowIfCancellationRequested();
+
+        _logger.LogInformation($"Начато оформление бронирования {booking.Id}");
+
+        // Имитация обработки бронирования
+        await Task.Delay(TimeSpan.FromSeconds(2), stoppingToken);
+
+        await _processingSemaphore.WaitAsync(stoppingToken);
+
+        var @event = _eventStore.FindById(booking.EventId);
+
+        try
+        {
+            if (@event == null)
+            {
+                booking.Reject();
+                _logger.LogWarning($"Бронирование {booking.Id} отклонено. Не найдено событие {booking.EventId}.");
+            }
+            else
+            {
+                booking.Confirm();
+                _logger.LogInformation($"Бронирование {booking.Id} оформлено.");
+            }
+
+            await _bookingStore.UpdateAsync(booking);
+        }
+        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+        {
+            // Штатная остановка, выходим из цикла
+            _logger.LogInformation($"Бронирование {booking.Id} отменено.");
+        }
+        catch (Exception e) {
+            booking.Reject();
+            await _bookingStore.UpdateAsync(booking);
+
+            if (@event != null)
+            {
+                @event.ReleaseSeats();
+                _eventStore.Update(@event);
+            }
+
+            _logger.LogError(e, $"Возникла непредвиденная ошибка при оформлении бронирования {booking.Id}.");
+        }
+        finally
+        {
+            _processingSemaphore.Release();
+        }
     }
 }

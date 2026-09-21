@@ -18,7 +18,7 @@ public class BookingService(IBookingRepository bookingRepository, IEventReposito
 
         lock (_bookingLock)
         {
-            var @event = eventRepository.FindById(eventId) ?? throw new EventNotFoundException(eventId);
+            var @event = _eventRepository.FindById(eventId) ?? throw new EventNotFoundException(eventId);
             var canReserve = @event.TryReserveSeats();
 
             if (!canReserve)
