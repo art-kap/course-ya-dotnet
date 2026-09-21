@@ -11,7 +11,8 @@ public static class EventMapping
             eventRequestDto.Title,
             eventRequestDto.Description,
             eventRequestDto.StartAt!.Value,
-            eventRequestDto.EndAt!.Value);
+            eventRequestDto.EndAt!.Value,
+            eventRequestDto.TotalSeats!.Value);
     }
 
     public static EventResponseDto ToResponseDto(this Event @event)
@@ -21,6 +22,8 @@ public static class EventMapping
             @event.Title,
             @event.Description,
             @event.StartAt,
-            @event.EndAt);
+            @event.EndAt,
+            @event.TotalSeats,
+            @event.AvailableSeats);
     }
 }

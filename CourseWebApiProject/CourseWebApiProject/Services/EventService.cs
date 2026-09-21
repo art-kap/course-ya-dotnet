@@ -12,10 +12,7 @@ public class EventService(IEventRepository eventRepository) : IEventService
 
     public EventResponseDto AddEvent(EventRequestDto eventDto)
     {
-        if (eventDto.StartAt >= eventDto.EndAt)
-        {
-            throw new ArgumentException("Точное время окончания должно быть позже времени начала.");
-        }
+        ValidateEventRequest(eventDto);
 
         var newEvent = eventDto.ToEvent();
         _eventRepository.Add(newEvent);
@@ -25,13 +22,10 @@ public class EventService(IEventRepository eventRepository) : IEventService
 
     public void UpdateEvent(Guid eventId, EventRequestDto eventDto)
     {
-        if (eventDto.StartAt >= eventDto.EndAt)
-        {
-            throw new ArgumentException("Точное время окончания должно быть позже времени начала.");
-        }
+        ValidateEventRequest(eventDto);
 
         var eventToUpdate = _eventRepository.FindById(eventId) ?? throw new EventNotFoundException(eventId);
-        eventToUpdate.Update(eventDto.Title, eventDto.Description, eventDto.StartAt!.Value, eventDto.EndAt!.Value);
+        eventToUpdate.Update(eventDto.Title, eventDto.Description, eventDto.StartAt!.Value, eventDto.EndAt!.Value, eventDto.TotalSeats!.Value);
         _eventRepository.Update(eventToUpdate);
     }
 
@@ -73,5 +67,18 @@ public class EventService(IEventRepository eventRepository) : IEventService
     {
         var eventToGet = _eventRepository.FindById(eventId) ?? throw new EventNotFoundException(eventId);
         return eventToGet.ToResponseDto();
+    }
+
+    private void ValidateEventRequest(EventRequestDto eventDto)
+    {
+        if (eventDto.StartAt >= eventDto.EndAt)
+        {
+            throw new ArgumentException("Точное время окончания должно быть позже времени начала.");
+        }
+
+        if (eventDto.TotalSeats <= 0)
+        {
+            throw new ArgumentException("Количество мест должно быть больше нуля.");
+        }
     }
 }

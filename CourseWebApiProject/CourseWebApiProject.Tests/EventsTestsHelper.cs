@@ -9,13 +9,14 @@ public static class EventsTestsHelper
     public const string PreviousMonthTitle = "event in the previous month";
     public const string CurrentMonthTitle = "event in the current month";
     public const string NextMonthTitle = "event in the next month";
+    public const int TotalSeats = 3;
 
     public static EventRequestDto GetValidEventDto()
     {
         var startAt = DateTime.Now;
         var endAtValid = startAt.AddHours(1);
 
-        return new EventRequestDto("test title", "", startAt, endAtValid);
+        return new EventRequestDto("test title", "", startAt, endAtValid, TotalSeats);
     }
 
     public static EventRequestDto GetAnotherValidEventDto()
@@ -23,7 +24,7 @@ public static class EventsTestsHelper
         var startAt = DateTime.Now.AddDays(1);
         var endAtValid = startAt.AddHours(1);
 
-        return new EventRequestDto("sample title", "sample description", startAt, endAtValid);
+        return new EventRequestDto("sample title", "sample description", startAt, endAtValid, TotalSeats);
     }
 
     public static EventRequestDto GetEventDtoWithInvalidDates()
@@ -31,7 +32,7 @@ public static class EventsTestsHelper
         var startAt = DateTime.Now;
         var endAtInvalid = startAt;
 
-        return new EventRequestDto("test title", "", startAt, endAtInvalid);
+        return new EventRequestDto("test title", "", startAt, endAtInvalid, TotalSeats);
     }
 
     public static List<EventRequestDto> GetThreeTestEventDtos(DateTime startAtCurrentMonth, int durationHours = 1)
@@ -40,9 +41,9 @@ public static class EventsTestsHelper
 
         return
         [
-            new(PreviousMonthTitle, "", startAtCurrentMonth.AddMonths(-1), endAtCurrentMonth.AddMonths(-1)),
-            new(CurrentMonthTitle, "", startAtCurrentMonth, endAtCurrentMonth),
-            new(NextMonthTitle, "", startAtCurrentMonth.AddMonths(1), endAtCurrentMonth.AddMonths(1))
+            new(PreviousMonthTitle, "", startAtCurrentMonth.AddMonths(-1), endAtCurrentMonth.AddMonths(-1), TotalSeats),
+            new(CurrentMonthTitle, "", startAtCurrentMonth, endAtCurrentMonth, TotalSeats),
+            new(NextMonthTitle, "", startAtCurrentMonth.AddMonths(1), endAtCurrentMonth.AddMonths(1), TotalSeats)
         ];
     }
 

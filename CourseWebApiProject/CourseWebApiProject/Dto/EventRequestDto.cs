@@ -9,6 +9,7 @@ namespace CourseWebApiProject.Dto;
 /// <param name="Description">Описание события</param>
 /// <param name="StartAt">Точное время начала события</param>
 /// <param name="EndAt">Точное время окончания события</param>
+/// <param name="TotalSeats">Общее количество мест на событии</param>
 public record EventRequestDto(
     [Required(ErrorMessage = "Название обязательно для заполнения.")]
     string Title,
@@ -16,4 +17,6 @@ public record EventRequestDto(
     [Required(ErrorMessage = "Точное время начала обязательно для заполнения.")]
     DateTime? StartAt,
     [Required(ErrorMessage = "Точное время окончания обязательно для заполнения.")]
-    DateTime? EndAt);
+    DateTime? EndAt,
+    [Required(ErrorMessage = "Общее количество мест обязательно для заполнения.")]
+    int? TotalSeats);
