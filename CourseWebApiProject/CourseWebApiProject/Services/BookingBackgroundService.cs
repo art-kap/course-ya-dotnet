@@ -1,24 +1,18 @@
 ﻿using CourseWebApiProject.Interfaces;
 using CourseWebApiProject.Models;
+using System.Collections.Concurrent;
 
 namespace CourseWebApiProject.Services;
 
-public class BookingBackgroundService : BackgroundService
+public class BookingBackgroundService(IBookingRepository bookingStore, IEventRepository eventStore, ILogger<BookingBackgroundService> logger) : BackgroundService
 {
-    private readonly IBookingRepository _bookingStore;
-    private readonly IEventRepository _eventStore;
-    private readonly ILogger _logger;
-    private readonly SemaphoreSlim _processingSemaphore = new(1, 1);
+    private static readonly TimeSpan PollingInterval = TimeSpan.FromSeconds(2);
+    private static readonly TimeSpan ProcessingDelay = TimeSpan.FromSeconds(1);
 
-    public BookingBackgroundService(IServiceScopeFactory scopeFactory, ILogger<BookingBackgroundService> logger)
-    {
-        using var scope = scopeFactory.CreateScope();
-
-        _bookingStore = scope.ServiceProvider.GetRequiredService<IBookingRepository>();
-        _eventStore = scope.ServiceProvider.GetRequiredService<IEventRepository>();
-
-        _logger = logger;
-    }
+    private readonly IBookingRepository _bookingStore = bookingStore;
+    private readonly IEventRepository _eventStore = eventStore;
+    private readonly ILogger _logger = logger;
+    private readonly ConcurrentDictionary<Guid, SemaphoreSlim> _eventSemaphores = new();
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -30,7 +24,7 @@ public class BookingBackgroundService : BackgroundService
             var tasks = pendingBookings.Select(booking => ProcessBookingAsync(booking, stoppingToken));
 
             await Task.WhenAll(tasks);
-            await Task.Delay(TimeSpan.FromSeconds(1), stoppingToken);
+            await Task.Delay(ProcessingDelay, stoppingToken);
         }
 
         _logger.LogInformation("Фоновый сервис завершает работу.");
@@ -43,9 +37,10 @@ public class BookingBackgroundService : BackgroundService
         _logger.LogInformation($"Начато оформление бронирования {booking.Id}");
 
         // Имитация обработки бронирования
-        await Task.Delay(TimeSpan.FromSeconds(2), stoppingToken);
+        await Task.Delay(PollingInterval, stoppingToken);
 
-        await _processingSemaphore.WaitAsync(stoppingToken);
+        var semaphore = _eventSemaphores.GetOrAdd(booking.EventId, k => new SemaphoreSlim(1, 1));
+        await semaphore.WaitAsync(stoppingToken);
 
         var @event = _eventStore.FindById(booking.EventId);
 
@@ -69,7 +64,8 @@ public class BookingBackgroundService : BackgroundService
             // Штатная остановка, выходим из цикла
             _logger.LogInformation($"Бронирование {booking.Id} отменено.");
         }
-        catch (Exception e) {
+        catch (Exception e)
+        {
             booking.Reject();
             await _bookingStore.UpdateAsync(booking);
 
@@ -83,7 +79,7 @@ public class BookingBackgroundService : BackgroundService
         }
         finally
         {
-            _processingSemaphore.Release();
+            semaphore.Release();
         }
     }
 }

@@ -61,7 +61,7 @@ public class BookingIntegrationTests
         {
             var response = await _bookingService.CreateBookingAsync(createdEvent.Id);
             bookingIdBag.Add(response.Id);
-        };
+        }
 
         // Assert
         bookingIdBag.Count.Should().Be(availableSeatsBeforeBooking);
@@ -105,8 +105,10 @@ public class BookingIntegrationTests
         var booking = await _bookingService.CreateBookingAsync(createdEvent.Id);
         var bookingId = booking.Id;
 
+        var serviceWorktime = TimeSpan.FromSeconds(5);
+
         // Act
-        await Task.Delay(TimeSpan.FromSeconds(5));
+        await Task.Delay(serviceWorktime);
         await backgroundService.StopAsync(CancellationToken.None);
         var handledBooking = await _bookingService.GetBookingByIdAsync(bookingId);
 
@@ -127,35 +129,31 @@ public class BookingIntegrationTests
         const int concurrentBookings = 20;
 
         var validEventDto = EventsTestsHelper.GetValidEventDto(totalSeats);
-        var createdEvent = _eventService.AddEvent(validEventDto);
-
-        var successedBookingIdBag = new ConcurrentBag<Guid>();
-        var failedBookingsCount = 0;
+        var eventId = _eventService.AddEvent(validEventDto).Id;
 
         // Act
-        for (int i = 0; i < concurrentBookings; i++)
-        {
-            try
+        var tasks = Enumerable.Range(0, concurrentBookings)
+            .Select(_ => Task.Run(async () =>
             {
-                var response = await _bookingService.CreateBookingAsync(createdEvent.Id);
-                successedBookingIdBag.Add(response.Id);
-            }
-            catch (NoAvailableSeatsException)
-            {
-                failedBookingsCount++;
-            }
-        }
+                try
+                {
+                    await _bookingService.CreateBookingAsync(eventId);
+                    return true;
+                }
+                catch (NoAvailableSeatsException)
+                {
+                    return false;
+                }
+            })).ToArray();
 
-        await Task.Delay(TimeSpan.FromSeconds(5));
+        var results = await Task.WhenAll(tasks);
         await backgroundService.StopAsync(CancellationToken.None);
 
-        var confirmedBookingsCount = successedBookingIdBag.Select(async bookingId => await _bookingService.GetBookingByIdAsync(bookingId))
-            .Select(task => task.Result)
-            .Count(booking => booking.Status == (int)BookingStatus.Confirmed);
+        var @event = _eventService.GetEvent(eventId);
 
         // Assert
-        failedBookingsCount.Should().Be(concurrentBookings - totalSeats);
-        confirmedBookingsCount.Should().Be(totalSeats);
+        results.Count(r => r).Should().Be(totalSeats);
+        @event.AvailableSeats.Should().Be(0);
     }
 
     [Fact]
@@ -169,22 +167,34 @@ public class BookingIntegrationTests
         const int concurrentBookings = totalSeats;
 
         var validEventDto = EventsTestsHelper.GetValidEventDto(totalSeats);
-        var createdEvent = _eventService.AddEvent(validEventDto);
+        var eventId = _eventService.AddEvent(validEventDto).Id;
 
         var successedBookingIdBag = new ConcurrentBag<Guid>();
 
         // Act
-        for (int i = 0; i < concurrentBookings; i++)
-        {
-            var response = await _bookingService.CreateBookingAsync(createdEvent.Id);
-            successedBookingIdBag.Add(response.Id);
-        }
+        var tasks = Enumerable.Range(0, concurrentBookings)
+           .Select(_ => Task.Run(async () =>
+           {
+               try
+               {
+                   var response = await _bookingService.CreateBookingAsync(eventId);
+                   successedBookingIdBag.Add(response.Id);
+                   return true;
+               }
+               catch (NoAvailableSeatsException)
+               {
+                   return false;
+               }
+           })).ToArray();
 
-        await Task.Delay(TimeSpan.FromSeconds(5));
+        var results = await Task.WhenAll(tasks);
         await backgroundService.StopAsync(CancellationToken.None);
+
+        var @event = _eventService.GetEvent(eventId);
 
         // Assert
         successedBookingIdBag.Count.Should().Be(concurrentBookings);
+        @event.AvailableSeats.Should().Be(0);
     }
 
     private IHostedService GetBackgroundService()

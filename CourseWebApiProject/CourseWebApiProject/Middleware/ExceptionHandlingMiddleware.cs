@@ -29,7 +29,7 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
         HttpStatusCode statusCode;
         string title, message;
 
-        switch(exception)
+        switch (exception)
         {
             case EntityNotFoundException:
                 statusCode = HttpStatusCode.NotFound;

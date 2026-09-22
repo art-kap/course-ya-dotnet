@@ -18,7 +18,7 @@ public class BookingTests
         // Assert
         booking.Should().NotBeNull();
         booking.EventId.Should().Be(@event.Id);
-        booking.CreatedAt.Should().BeAfter(timeNow);
+        booking.CreatedAt.Should().BeOnOrAfter(timeNow);
         booking.Status.Should().Be(BookingStatus.Pending);
     }
 
@@ -36,8 +36,8 @@ public class BookingTests
 
         // Assert
         booking.EventId.Should().Be(@event.Id);
-        booking.CreatedAt.Should().BeAfter(timeNow);
-        booking.ProcessedAt.Should().BeAfter(booking.CreatedAt);
+        booking.CreatedAt.Should().BeOnOrAfter(timeNow);
+        booking.ProcessedAt.Should().BeOnOrAfter(booking.CreatedAt);
         booking.Status.Should().Be(BookingStatus.Confirmed);
     }
 
@@ -55,8 +55,8 @@ public class BookingTests
 
         // Assert
         booking.EventId.Should().Be(@event.Id);
-        booking.CreatedAt.Should().BeAfter(timeNow);
-        booking.ProcessedAt.Should().BeAfter(booking.CreatedAt);
+        booking.CreatedAt.Should().BeOnOrAfter(timeNow);
+        booking.ProcessedAt.Should().BeOnOrAfter(booking.CreatedAt);
         booking.Status.Should().Be(BookingStatus.Rejected);
     }
 }

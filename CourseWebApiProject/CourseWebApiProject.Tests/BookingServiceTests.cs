@@ -72,7 +72,7 @@ public class BookingServiceTests
         var booking = Booking.Create(eventId);
         var bookingId = booking.Id;
 
-        _mockEventRepository.Setup(repo => repo.ContainsId(eventId)).Returns(true);        
+        _mockEventRepository.Setup(repo => repo.ContainsId(eventId)).Returns(true);
         _mockBookingRepository.Setup(repo => repo.FindByIdAsync(bookingId)).ReturnsAsync(booking);
 
         // Act
