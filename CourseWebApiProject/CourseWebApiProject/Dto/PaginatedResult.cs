@@ -9,6 +9,6 @@
 /// <param name="CurrentPageSize">Количество элементов на текущей странице</param>
 public record PaginatedResult(
     int EventsCount,
-    EventResponseDto[] CurrentPageEvents,
+    EventInfo[] CurrentPageEvents,
     int CurrentPageNumber,
     int CurrentPageSize);

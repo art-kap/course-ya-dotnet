@@ -30,10 +30,10 @@ public class EventsController(IEventService _eventService, IBookingService _book
     /// <response code="200">Возвращается в случае успешного ответа</response>
     /// <response code="404">Возвращается, если нет события с данным id</response>
     [HttpGet("{id:Guid}")]
-    [ProducesResponseType(typeof(EventResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(EventInfo), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [Produces("application/json")]
-    public ActionResult<EventResponseDto> GetById([FromRoute] Guid id)
+    public ActionResult<EventInfo> GetById([FromRoute] Guid id)
     {
         return Ok(_eventService.GetEvent(id));
     }
@@ -41,24 +41,24 @@ public class EventsController(IEventService _eventService, IBookingService _book
     /// <summary>
     /// Создать событие
     /// </summary>
-    /// <param name="eventRequestDto">Данные события</param>
+    /// <param name="eventCreate">Данные события</param>
     /// <response code="201">Возвращается в случае успешного создания события</response>
     /// <response code="400">Возвращается, если входные данные некорректны</response>
     [HttpPost]
-    [ProducesResponseType(typeof(EventResponseDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(EventInfo), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [Produces("application/json")]
-    public IActionResult Post([FromBody] EventRequestDto eventRequestDto)
+    public IActionResult Post([FromBody] EventCreate eventCreate)
     {
-        var responseDto = _eventService.AddEvent(eventRequestDto);
+        var responseDto = _eventService.AddEvent(eventCreate);
         return CreatedAtAction(nameof(GetById), new { id = responseDto.Id }, responseDto);
     }
 
     /// <summary>
-    /// Обновить событие целиком
+    /// Обновить событие
     /// </summary>
     /// <param name="id">id события</param>
-    /// <param name="eventRequestDto">Данные события</param>
+    /// <param name="eventUpdate">Данные события</param>
     /// <response code="204">Возвращается в случае успешного обновления события</response>
     /// <response code="400">Возвращается, если входные данные некорректны</response>
     /// <response code="404">Возвращается, если нет события с данным id</response>
@@ -67,9 +67,9 @@ public class EventsController(IEventService _eventService, IBookingService _book
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [Produces("application/json")]
-    public IActionResult Put([FromRoute] Guid id, [FromBody] EventRequestDto eventRequestDto)
+    public IActionResult Put([FromRoute] Guid id, [FromBody] EventUpdate eventUpdate)
     {
-        _eventService.UpdateEvent(id, eventRequestDto);
+        _eventService.UpdateEvent(id, eventUpdate);
         return NoContent();
     }
 

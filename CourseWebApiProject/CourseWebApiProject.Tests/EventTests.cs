@@ -14,10 +14,9 @@ public class EventTests
         var newDescription = "Updated Event Description";
         var newStartAt = @event.StartAt.AddDays(1);
         var newEndAt = @event.EndAt.AddDays(1);
-        var newTotalSeats = @event.TotalSeats + 5;
 
         // Act
-        @event.Update(newTitle, newDescription, newStartAt, newEndAt, newTotalSeats);
+        @event.Update(newTitle, newDescription, newStartAt, newEndAt);
 
         // Assert
         @event.Id.Should().Be(eventId);
@@ -25,7 +24,6 @@ public class EventTests
         @event.Description.Should().Be(newDescription);
         @event.StartAt.Should().Be(newStartAt);
         @event.EndAt.Should().Be(newEndAt);
-        @event.TotalSeats.Should().Be(newTotalSeats);
     }
 
     [Fact]

@@ -11,39 +11,55 @@ public static class EventsTestsHelper
     public const string NextMonthTitle = "event in the next month";
     public const int DefaultTotalSeats = 3;
 
-    public static EventRequestDto GetValidEventDto(int totalSeats = DefaultTotalSeats)
+    public static EventCreate GetValidEventCreate(int totalSeats = DefaultTotalSeats)
     {
         var startAt = DateTime.Now;
         var endAtValid = startAt.AddHours(1);
 
-        return new EventRequestDto("test title", "", startAt, endAtValid, totalSeats);
+        return new EventCreate("test title", "", startAt, endAtValid, totalSeats);
     }
 
-    public static EventRequestDto GetAnotherValidEventDto()
+    public static EventCreate GetAnotherValidEventCreate(int totalSeats = DefaultTotalSeats)
+    {
+        var startAt = DateTime.Now;
+        var endAtValid = startAt.AddHours(1);
+
+        return new EventCreate("test title", "", startAt, endAtValid, totalSeats);
+    }
+
+    public static EventUpdate GetValidEventUpdate()
     {
         var startAt = DateTime.Now.AddDays(1);
         var endAtValid = startAt.AddHours(1);
 
-        return new EventRequestDto("sample title", "sample description", startAt, endAtValid, DefaultTotalSeats);
+        return new EventUpdate("sample title", "sample description", startAt, endAtValid);
     }
 
-    public static EventRequestDto GetEventDtoWithInvalidDates()
+    public static EventCreate GetEventCreateWithInvalidDates()
     {
         var startAt = DateTime.Now;
         var endAtInvalid = startAt;
 
-        return new EventRequestDto("test title", "", startAt, endAtInvalid, DefaultTotalSeats);
+        return new EventCreate("test title", "", startAt, endAtInvalid, DefaultTotalSeats);
     }
 
-    public static EventRequestDto GetEventDtoWithInvalidTotalSeats()
+    public static EventUpdate GetEventUpdateWithInvalidDates()
+    {
+        var startAt = DateTime.Now;
+        var endAtInvalid = startAt;
+
+        return new EventUpdate("test title", "", startAt, endAtInvalid);
+    }
+
+    public static EventCreate GetEventCreateWithInvalidTotalSeats()
     {
         var startAt = DateTime.Now;
         var endAtValid = startAt.AddHours(1);
 
-        return new EventRequestDto("test title", "", startAt, endAtValid, 0);
+        return new EventCreate("test title", "", startAt, endAtValid, 0);
     }
 
-    public static List<EventRequestDto> GetThreeTestEventDtos(DateTime startAtCurrentMonth, int durationHours = 1)
+    public static List<EventCreate> GetThreeTestEventCreates(DateTime startAtCurrentMonth, int durationHours = 1)
     {
         var endAtCurrentMonth = startAtCurrentMonth.AddHours(durationHours);
 
@@ -57,11 +73,11 @@ public static class EventsTestsHelper
 
     public static Event GetValidEvent()
     {
-        return GetValidEventDto().ToEvent();
+        return GetValidEventCreate().ToEvent();
     }
 
     public static Event GetAnotherValidEvent()
     {
-        return GetAnotherValidEventDto().ToEvent();
+        return GetAnotherValidEventCreate().ToEvent();
     }
 }

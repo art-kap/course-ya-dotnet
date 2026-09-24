@@ -50,7 +50,7 @@ public class InMemoryEventStoreTests
         _inMemoryEventStore.Add(eventToUpdate);
 
         var timeNow = DateTime.Now;
-        eventToUpdate.Update("Updated Title", "Updated Description", timeNow, timeNow.AddHours(1), 5);
+        eventToUpdate.Update("Updated Title", "Updated Description", timeNow, timeNow.AddHours(1));
 
         // Act
         _inMemoryEventStore.Update(eventToUpdate);

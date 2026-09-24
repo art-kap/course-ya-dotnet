@@ -10,13 +10,12 @@ public class Event(string title, string? description, DateTime startAt, DateTime
     public int TotalSeats { get; private set; } = totalSeats;
     public int AvailableSeats { get; private set; } = totalSeats;
 
-    public void Update(string title, string? description, DateTime startAt, DateTime endAt, int totalSeats)
+    public void Update(string title, string? description, DateTime startAt, DateTime endAt)
     {
         Title = title;
         Description = description;
         StartAt = startAt;
         EndAt = endAt;
-        TotalSeats = totalSeats;
     }
 
     public bool TryReserveSeats(int count = 1)

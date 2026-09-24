@@ -10,7 +10,7 @@
 /// <param name="EndAt">Точное время окончания события</param>
 /// <param name="TotalSeats">Общее количество мест на событии</param>
 /// <param name="AvailableSeats">Текущее количество свободных мест</param>
-public record EventResponseDto(
+public record EventInfo(
     Guid Id,
     string Title,
     string? Description,

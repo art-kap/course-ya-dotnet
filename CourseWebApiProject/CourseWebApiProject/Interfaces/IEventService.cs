@@ -6,11 +6,11 @@ public interface IEventService
 {
     PaginatedResult GetEventsByQuery(EventsQuery query);
 
-    EventResponseDto GetEvent(Guid eventId);
+    EventInfo GetEvent(Guid eventId);
 
-    EventResponseDto AddEvent(EventRequestDto eventDto);
+    EventInfo AddEvent(EventCreate eventCreate);
 
-    void UpdateEvent(Guid eventId, EventRequestDto eventDto);
+    void UpdateEvent(Guid eventId, EventUpdate eventUpdate);
 
     void RemoveEvent(Guid eventId);
 }

@@ -31,7 +31,7 @@ public class BookingIntegrationTests
     public async Task CreateBooking_ExistingEvent_Success()
     {
         // Arrange
-        var validEventDto = EventsTestsHelper.GetValidEventDto();
+        var validEventDto = EventsTestsHelper.GetValidEventCreate();
         var createdEvent = _eventService.AddEvent(validEventDto);
         var availableSeatsBeforeBooking = createdEvent.AvailableSeats;
 
@@ -50,7 +50,7 @@ public class BookingIntegrationTests
     public async Task CreateBookings_ExistingEvent_SuccessUntilNoSeatsLeft()
     {
         // Arrange
-        var validEventDto = EventsTestsHelper.GetValidEventDto();
+        var validEventDto = EventsTestsHelper.GetValidEventCreate();
         var createdEvent = _eventService.AddEvent(validEventDto);
         var availableSeatsBeforeBooking = createdEvent.AvailableSeats;
 
@@ -72,7 +72,7 @@ public class BookingIntegrationTests
     public async Task CreateBooking_NonExistingEvent_ShouldThrowEventNotFoundException()
     {
         // Arrange
-        var validEventDto = EventsTestsHelper.GetValidEventDto();
+        var validEventDto = EventsTestsHelper.GetValidEventCreate();
         var createdEvent = _eventService.AddEvent(validEventDto);
         var nonExistingEventId = Guid.NewGuid();
 
@@ -84,7 +84,7 @@ public class BookingIntegrationTests
     public async Task CreateBooking_RemovedEvent_ShouldThrowEventNotFoundException()
     {
         // Arrange
-        var validEventDto = EventsTestsHelper.GetValidEventDto();
+        var validEventDto = EventsTestsHelper.GetValidEventCreate();
         var eventToRemove = _eventService.AddEvent(validEventDto);
         var eventId = eventToRemove.Id;
         _eventService.RemoveEvent(eventId);
@@ -100,7 +100,7 @@ public class BookingIntegrationTests
         var backgroundService = GetBackgroundService();
         await backgroundService.StartAsync(CancellationToken.None);
 
-        var validEventDto = EventsTestsHelper.GetValidEventDto();
+        var validEventDto = EventsTestsHelper.GetValidEventCreate();
         var createdEvent = _eventService.AddEvent(validEventDto);
         var booking = await _bookingService.CreateBookingAsync(createdEvent.Id);
         var bookingId = booking.Id;
@@ -128,7 +128,7 @@ public class BookingIntegrationTests
         const int totalSeats = 5;
         const int concurrentBookings = 20;
 
-        var validEventDto = EventsTestsHelper.GetValidEventDto(totalSeats);
+        var validEventDto = EventsTestsHelper.GetValidEventCreate(totalSeats);
         var eventId = _eventService.AddEvent(validEventDto).Id;
 
         // Act
@@ -166,7 +166,7 @@ public class BookingIntegrationTests
         const int totalSeats = 10;
         const int concurrentBookings = totalSeats;
 
-        var validEventDto = EventsTestsHelper.GetValidEventDto(totalSeats);
+        var validEventDto = EventsTestsHelper.GetValidEventCreate(totalSeats);
         var eventId = _eventService.AddEvent(validEventDto).Id;
 
         var successedBookingIdBag = new ConcurrentBag<Guid>();
