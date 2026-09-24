@@ -6,8 +6,8 @@ namespace CourseWebApiProject.Services;
 
 public class BookingBackgroundService(IBookingRepository bookingStore, IEventRepository eventStore, ILogger<BookingBackgroundService> logger) : BackgroundService
 {
-    private static readonly TimeSpan PollingInterval = TimeSpan.FromSeconds(2);
-    private static readonly TimeSpan ProcessingDelay = TimeSpan.FromSeconds(1);
+    private static readonly TimeSpan PollingInterval = TimeSpan.FromSeconds(1);
+    private static readonly TimeSpan ProcessingDelay = TimeSpan.FromSeconds(2);
 
     private readonly IBookingRepository _bookingStore = bookingStore;
     private readonly IEventRepository _eventStore = eventStore;
@@ -24,7 +24,7 @@ public class BookingBackgroundService(IBookingRepository bookingStore, IEventRep
             var tasks = pendingBookings.Select(booking => ProcessBookingAsync(booking, stoppingToken));
 
             await Task.WhenAll(tasks);
-            await Task.Delay(ProcessingDelay, stoppingToken);
+            await Task.Delay(PollingInterval, stoppingToken);
         }
 
         _logger.LogInformation("Фоновый сервис завершает работу.");
@@ -37,7 +37,7 @@ public class BookingBackgroundService(IBookingRepository bookingStore, IEventRep
         _logger.LogInformation($"Начато оформление бронирования {booking.Id}");
 
         // Имитация обработки бронирования
-        await Task.Delay(PollingInterval, stoppingToken);
+        await Task.Delay(ProcessingDelay, stoppingToken);
 
         var semaphore = _eventSemaphores.GetOrAdd(booking.EventId, k => new SemaphoreSlim(1, 1));
         await semaphore.WaitAsync(stoppingToken);

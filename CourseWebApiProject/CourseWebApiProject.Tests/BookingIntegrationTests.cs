@@ -64,7 +64,7 @@ public class BookingIntegrationTests
         }
 
         // Assert
-        bookingIdBag.Count.Should().Be(availableSeatsBeforeBooking);
+        bookingIdBag.Distinct().Count().Should().Be(availableSeatsBeforeBooking);
         await Assert.ThrowsAsync<NoAvailableSeatsException>(() => _bookingService.CreateBookingAsync(createdEvent.Id));
     }
 
@@ -193,7 +193,7 @@ public class BookingIntegrationTests
         var @event = _eventService.GetEvent(eventId);
 
         // Assert
-        successedBookingIdBag.Count.Should().Be(concurrentBookings);
+        successedBookingIdBag.Distinct().Count().Should().Be(concurrentBookings);
         @event.AvailableSeats.Should().Be(0);
     }
 
