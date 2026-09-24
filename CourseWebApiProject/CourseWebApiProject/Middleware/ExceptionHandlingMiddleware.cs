@@ -29,7 +29,7 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
         HttpStatusCode statusCode;
         string title, message;
 
-        switch(exception)
+        switch (exception)
         {
             case EntityNotFoundException:
                 statusCode = HttpStatusCode.NotFound;
@@ -41,6 +41,13 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
             case ArgumentException:
                 statusCode = HttpStatusCode.BadRequest;
                 title = "Недопустимые данные.";
+                message = exception.Message;
+                _logger.LogWarning(exception, message);
+                break;
+
+            case NoAvailableSeatsException:
+                statusCode = HttpStatusCode.Conflict;
+                title = "Отказано в бронировании.";
                 message = exception.Message;
                 _logger.LogWarning(exception, message);
                 break;

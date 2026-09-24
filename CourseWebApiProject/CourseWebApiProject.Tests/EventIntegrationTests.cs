@@ -19,7 +19,7 @@ public class EventIntegrationTests
     public void Add_ValidEvent_Success()
     {
         // Arrange
-        var validEvent = EventsTestsHelper.GetValidEventDto();
+        var validEvent = EventsTestsHelper.GetValidEventCreate();
 
         // Act
         var response = _eventService.AddEvent(validEvent);
@@ -33,7 +33,7 @@ public class EventIntegrationTests
     public void GetEvent_ExistingId_Success()
     {
         // Arrange
-        var validEvent = EventsTestsHelper.GetValidEventDto();
+        var validEvent = EventsTestsHelper.GetValidEventCreate();
         var id = _eventService.AddEvent(validEvent).Id;
 
         // Act
@@ -48,9 +48,9 @@ public class EventIntegrationTests
     public void UpdateEvent_ExistingId_Success()
     {
         // Arrange
-        var validEvent = EventsTestsHelper.GetValidEventDto();
+        var validEvent = EventsTestsHelper.GetValidEventCreate();
         var id = _eventService.AddEvent(validEvent).Id;
-        var anotherValidEvent = EventsTestsHelper.GetAnotherValidEventDto();
+        var anotherValidEvent = EventsTestsHelper.GetValidEventUpdate();
 
         // Act
         _eventService.UpdateEvent(id, anotherValidEvent);
@@ -65,7 +65,7 @@ public class EventIntegrationTests
     public void RemoveEvent_ExistingId_Success()
     {
         // Arrange
-        var validEvent = EventsTestsHelper.GetValidEventDto();
+        var validEvent = EventsTestsHelper.GetValidEventCreate();
         var id = _eventService.AddEvent(validEvent).Id;
 
         // Act
@@ -79,7 +79,7 @@ public class EventIntegrationTests
     public void GetAll_ThreeEventsOnSinglePage_Success()
     {
         // Arrange
-        var events = EventsTestsHelper.GetThreeTestEventDtos(DateTime.Now);
+        var events = EventsTestsHelper.GetThreeTestEventCreates(DateTime.Now);
         events.ForEach(e => _eventService.AddEvent(e));
         var emptyQuery = new EventsQuery(null, null, null, 1, events.Count);
 
@@ -97,7 +97,7 @@ public class EventIntegrationTests
     public void GetAll_ThreeEventsOnTwoPages_Success()
     {
         // Arrange
-        var events = EventsTestsHelper.GetThreeTestEventDtos(DateTime.Now);
+        var events = EventsTestsHelper.GetThreeTestEventCreates(DateTime.Now);
         events.ForEach(e => _eventService.AddEvent(e));
         var firstPageQuery = new EventsQuery(null, null, null, 1, 2);
         var secondPageQuery = new EventsQuery(null, null, null, 2, 2);
@@ -122,7 +122,7 @@ public class EventIntegrationTests
     public void Filter_Title_Success()
     {
         // Arrange
-        var events = EventsTestsHelper.GetThreeTestEventDtos(DateTime.Now);
+        var events = EventsTestsHelper.GetThreeTestEventCreates(DateTime.Now);
         events.ForEach(e => _eventService.AddEvent(e));
         var titleQuery = new EventsQuery("NEXT", null, null);
 
@@ -140,7 +140,7 @@ public class EventIntegrationTests
     {
         // Arrange
         var startAtCurrentMonth = DateTime.Now;
-        var events = EventsTestsHelper.GetThreeTestEventDtos(startAtCurrentMonth);
+        var events = EventsTestsHelper.GetThreeTestEventCreates(startAtCurrentMonth);
         events.ForEach(e => _eventService.AddEvent(e));
         var titleQuery = new EventsQuery(null, startAtCurrentMonth, null);
         var expectedTitles = new string[] { EventsTestsHelper.CurrentMonthTitle, EventsTestsHelper.NextMonthTitle };
@@ -160,7 +160,7 @@ public class EventIntegrationTests
         // Arrange
         var startAtCurrentMonth = DateTime.Now;
         var durationHours = 2;
-        var events = EventsTestsHelper.GetThreeTestEventDtos(startAtCurrentMonth, durationHours);
+        var events = EventsTestsHelper.GetThreeTestEventCreates(startAtCurrentMonth, durationHours);
         events.ForEach(e => _eventService.AddEvent(e));
         var titleQuery = new EventsQuery(null, null, startAtCurrentMonth.AddHours(durationHours));
         var expectedTitles = new string[] { EventsTestsHelper.PreviousMonthTitle, EventsTestsHelper.CurrentMonthTitle };
@@ -180,7 +180,7 @@ public class EventIntegrationTests
         // Arrange
         var startAtCurrentMonth = DateTime.Now;
         var durationHours = 2;
-        var events = EventsTestsHelper.GetThreeTestEventDtos(startAtCurrentMonth, 2);
+        var events = EventsTestsHelper.GetThreeTestEventCreates(startAtCurrentMonth, 2);
         events.ForEach(e => _eventService.AddEvent(e));
         var titleQuery = new EventsQuery(null, startAtCurrentMonth, startAtCurrentMonth.AddHours(durationHours));
 
@@ -203,7 +203,7 @@ public class EventIntegrationTests
         // Arrange
         var startAtCurrentMonth = DateTime.Now;
         var durationHours = 2;
-        var events = EventsTestsHelper.GetThreeTestEventDtos(startAtCurrentMonth, durationHours);
+        var events = EventsTestsHelper.GetThreeTestEventCreates(startAtCurrentMonth, durationHours);
         events.ForEach(e => _eventService.AddEvent(e));
         var titleQuery = new EventsQuery(title, startAtCurrentMonth.AddDays(-daysMargin), startAtCurrentMonth.AddHours(durationHours).AddDays(daysMargin));
 

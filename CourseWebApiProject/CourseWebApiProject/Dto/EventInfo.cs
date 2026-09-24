@@ -8,9 +8,13 @@
 /// <param name="Description">Описание события</param>
 /// <param name="StartAt">Точное время начала события</param>
 /// <param name="EndAt">Точное время окончания события</param>
-public record EventResponseDto(
+/// <param name="TotalSeats">Общее количество мест на событии</param>
+/// <param name="AvailableSeats">Текущее количество свободных мест</param>
+public record EventInfo(
     Guid Id,
     string Title,
     string? Description,
     DateTime StartAt,
-    DateTime EndAt);
+    DateTime EndAt,
+    int TotalSeats,
+    int AvailableSeats);

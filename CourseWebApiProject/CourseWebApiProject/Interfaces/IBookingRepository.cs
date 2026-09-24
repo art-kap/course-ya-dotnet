@@ -10,5 +10,7 @@ public interface IBookingRepository
 
     Task<IReadOnlyCollection<Booking>> GetAllAsync();
 
+    Task<IReadOnlyCollection<Booking>> GetPendingAsync();
+
     Task UpdateAsync(Booking booking);
 }

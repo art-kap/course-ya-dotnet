@@ -10,28 +10,23 @@ public class EventService(IEventRepository eventRepository) : IEventService
 {
     private readonly IEventRepository _eventRepository = eventRepository;
 
-    public EventResponseDto AddEvent(EventRequestDto eventDto)
+    public EventInfo AddEvent(EventCreate eventCreate)
     {
-        if (eventDto.StartAt >= eventDto.EndAt)
-        {
-            throw new ArgumentException("Точное время окончания должно быть позже времени начала.");
-        }
+        ValidateDateTimes(eventCreate.StartAt!.Value, eventCreate.EndAt!.Value);
+        ValidateTotalSeats(eventCreate.TotalSeats!.Value);
 
-        var newEvent = eventDto.ToEvent();
+        var newEvent = eventCreate.ToEvent();
         _eventRepository.Add(newEvent);
 
-        return newEvent.ToResponseDto();
+        return newEvent.ToEventInfo();
     }
 
-    public void UpdateEvent(Guid eventId, EventRequestDto eventDto)
+    public void UpdateEvent(Guid eventId, EventUpdate eventUpdate)
     {
-        if (eventDto.StartAt >= eventDto.EndAt)
-        {
-            throw new ArgumentException("Точное время окончания должно быть позже времени начала.");
-        }
+        ValidateDateTimes(eventUpdate.StartAt!.Value, eventUpdate.EndAt!.Value);
 
         var eventToUpdate = _eventRepository.FindById(eventId) ?? throw new EventNotFoundException(eventId);
-        eventToUpdate.Update(eventDto.Title, eventDto.Description, eventDto.StartAt!.Value, eventDto.EndAt!.Value);
+        eventToUpdate.Update(eventUpdate.Title, eventUpdate.Description, eventUpdate.StartAt!.Value, eventUpdate.EndAt!.Value);
         _eventRepository.Update(eventToUpdate);
     }
 
@@ -64,14 +59,30 @@ public class EventService(IEventRepository eventRepository) : IEventService
 
         var eventsCount = filteredEvents.Count();
         var currentPageEvents = filteredEvents.Skip((query.Page - 1) * query.PageSize).Take(query.PageSize);
-        var eventsArray = currentPageEvents.Select(e => e.ToResponseDto()).ToArray();
+        var eventsArray = currentPageEvents.Select(e => e.ToEventInfo()).ToArray();
 
         return new PaginatedResult(eventsCount, eventsArray, query.Page, eventsArray.Length);
     }
 
-    public EventResponseDto GetEvent(Guid eventId)
+    public EventInfo GetEvent(Guid eventId)
     {
         var eventToGet = _eventRepository.FindById(eventId) ?? throw new EventNotFoundException(eventId);
-        return eventToGet.ToResponseDto();
+        return eventToGet.ToEventInfo();
+    }
+
+    private void ValidateDateTimes(DateTime startAt, DateTime endAt)
+    {
+        if (startAt >= endAt)
+        {
+            throw new ArgumentException("Точное время окончания должно быть позже времени начала.");
+        }
+    }
+
+    private void ValidateTotalSeats(int totalSeats)
+    {
+        if (totalSeats <= 0)
+        {
+            throw new ArgumentException("Количество мест должно быть больше нуля.");
+        }
     }
 }

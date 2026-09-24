@@ -29,7 +29,8 @@ Content-Type: application/json
   "title": "test event",
   "description": "",
   "startAt": "2026-08-12T00:00:00",
-  "endAt": "2026-08-13T00:00:00"
+  "endAt": "2026-08-13T00:00:00",
+  "totalSeats": 3
 }
 
 ### Update event
@@ -39,7 +40,8 @@ Content-Type: application/json
   "title": "updated test event",
   "description": "updated description",
   "startAt": "2027-01-01T00:00:00",
-  "endAt": "2027-01-01T00:01:00"
+  "endAt": "2027-01-01T00:01:00",
+  "totalSeats": 4
 }
 
 ### Delete event

@@ -23,7 +23,7 @@ public class EventServiceTests
     public void Add_Event_ShouldCallAddOnce()
     {
         // Arrange
-        var validEvent = EventsTestsHelper.GetValidEventDto();
+        var validEvent = EventsTestsHelper.GetValidEventCreate();
 
         // Act
         var response = _eventService.AddEvent(validEvent);
@@ -36,7 +36,17 @@ public class EventServiceTests
     public void Add_EventWithInvalidDates_ShouldThrowArgumentException()
     {
         // Arrange
-        var invalidEvent = EventsTestsHelper.GetEventDtoWithInvalidDates();
+        var invalidEvent = EventsTestsHelper.GetEventCreateWithInvalidDates();
+
+        // Act & Assert
+        Assert.Throws<ArgumentException>(() => _eventService.AddEvent(invalidEvent));
+    }
+
+    [Fact]
+    public void Add_EventWithInvalidTotalSeats_ShouldThrowArgumentException()
+    {
+        // Arrange
+        var invalidEvent = EventsTestsHelper.GetEventCreateWithInvalidTotalSeats();
 
         // Act & Assert
         Assert.Throws<ArgumentException>(() => _eventService.AddEvent(invalidEvent));
@@ -61,7 +71,7 @@ public class EventServiceTests
     public void Get_NonExistingId_ShouldThrowEventNotFoundException()
     {
         // Arrange
-        var validEvent = EventsTestsHelper.GetValidEventDto();
+        var validEvent = EventsTestsHelper.GetValidEventCreate();
         _eventService.AddEvent(validEvent);
         var nonExistingId = Guid.NewGuid();
 
@@ -75,7 +85,7 @@ public class EventServiceTests
         // Arrange
         var validEvent = EventsTestsHelper.GetValidEvent();
         var id = validEvent.Id;
-        var anotherValidEventDto = EventsTestsHelper.GetAnotherValidEventDto();
+        var anotherValidEventDto = EventsTestsHelper.GetValidEventUpdate();
 
         _mockRepository.Setup(repo => repo.FindById(id)).Returns(validEvent);
 
@@ -90,9 +100,9 @@ public class EventServiceTests
     public void Update_NonExistingId_ShouldThrowEventNotFoundException()
     {
         // Arrange
-        var validEvent = EventsTestsHelper.GetValidEventDto();
+        var validEvent = EventsTestsHelper.GetValidEventCreate();
         _eventService.AddEvent(validEvent);
-        var anotherValidEvent = EventsTestsHelper.GetAnotherValidEventDto();
+        var anotherValidEvent = EventsTestsHelper.GetValidEventUpdate();
         var nonExistingId = Guid.NewGuid();
 
         // Act & Assert
@@ -103,7 +113,7 @@ public class EventServiceTests
     public void Remove_ExistingId_ShouldCallRemoveOnce()
     {
         // Arrange
-        var validEvent = EventsTestsHelper.GetValidEventDto();
+        var validEvent = EventsTestsHelper.GetValidEventCreate();
         var id = _eventService.AddEvent(validEvent).Id;
 
         _mockRepository.Setup(repo => repo.RemoveById(id)).Returns(true);
@@ -119,7 +129,7 @@ public class EventServiceTests
     public void Remove_NonExistingId_ShouldThrowEventNotFoundException()
     {
         // Arrange
-        var validEvent = EventsTestsHelper.GetValidEventDto();
+        var validEvent = EventsTestsHelper.GetValidEventCreate();
         _eventService.AddEvent(validEvent);
         var nonExistingId = Guid.NewGuid();
 
@@ -131,9 +141,9 @@ public class EventServiceTests
     public void Update_InvalidDates_ShouldThrowArgumentException()
     {
         // Arrange
-        var validEvent = EventsTestsHelper.GetValidEventDto();
+        var validEvent = EventsTestsHelper.GetValidEventCreate();
         var id = _eventService.AddEvent(validEvent).Id;
-        var invalidEvent = EventsTestsHelper.GetEventDtoWithInvalidDates();
+        var invalidEvent = EventsTestsHelper.GetEventUpdateWithInvalidDates();
 
         // Act & Assert
         Assert.Throws<ArgumentException>(() => _eventService.UpdateEvent(id, invalidEvent));
@@ -143,7 +153,7 @@ public class EventServiceTests
     public void GetAll_ShouldCallGetAllOnce()
     {
         // Arrange
-        var events = EventsTestsHelper.GetThreeTestEventDtos(DateTime.Now);
+        var events = EventsTestsHelper.GetThreeTestEventCreates(DateTime.Now);
         var returnedEvents = new List<Event>();
         events.ForEach(e => returnedEvents.Add(e.ToEvent()));
         var emptyQuery = new EventsQuery(null, null, null, 1, events.Count);

@@ -10,16 +10,26 @@ public class BookingService(IBookingRepository bookingRepository, IEventReposito
 {
     private readonly IBookingRepository _bookingRepository = bookingRepository;
     private readonly IEventRepository _eventRepository = eventRepository;
+    private readonly object _bookingLock = new();
 
     public async Task<BookingInfo> CreateBookingAsync(Guid eventId)
     {
-        if (!_eventRepository.ContainsId(eventId))
+        Booking bookingToAdd;
+
+        lock (_bookingLock)
         {
-            throw new EventNotFoundException(eventId);
+            var @event = _eventRepository.FindById(eventId) ?? throw new EventNotFoundException(eventId);
+            var canReserve = @event.TryReserveSeats();
+
+            if (!canReserve)
+            {
+                throw new NoAvailableSeatsException();
+            }
+
+            bookingToAdd = Booking.Create(eventId);
+            _bookingRepository.AddAsync(bookingToAdd);
         }
 
-        var bookingToAdd = Booking.Create(eventId);
-        await _bookingRepository.AddAsync(bookingToAdd);
         return bookingToAdd.ToInfo();
     }
 

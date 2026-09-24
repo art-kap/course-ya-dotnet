@@ -14,7 +14,7 @@ public class InMemoryEventStore : IEventRepository
 
     public Event? FindById(Guid eventId)
     {
-        return _events.Find(e => e.Id ==  eventId);
+        return _events.Find(e => e.Id == eventId);
     }
 
     public IReadOnlyCollection<Event> GetAll()
@@ -38,13 +38,13 @@ public class InMemoryEventStore : IEventRepository
     {
         var index = _events.FindIndex(e => e.Id == @event.Id);
 
-        if (index != -1) 
+        if (index != -1)
         {
             _events[index] = @event;
         }
     }
 
-    public bool ContainsId(Guid eventId) 
+    public bool ContainsId(Guid eventId)
     {
         return _events.Any(e => e.Id == eventId);
     }
