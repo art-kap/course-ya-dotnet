@@ -9,7 +9,7 @@ public class BookingTests
     public async Task Create_Booking_NotNullProperties()
     {
         // Arrange
-        var timeNow = DateTime.Now;
+        var timeNow = DateTime.Now.ToUniversalTime();
         var @event = EventsTestsHelper.GetValidEvent();
 
         // Act
@@ -26,7 +26,7 @@ public class BookingTests
     public async Task Confirm_Booking_ShouldBeConfirmed()
     {
         // Arrange
-        var timeNow = DateTime.Now;
+        var timeNow = DateTime.Now.ToUniversalTime();
 
         var @event = EventsTestsHelper.GetValidEvent();
         var booking = Booking.Create(@event.Id);
@@ -45,7 +45,7 @@ public class BookingTests
     public async Task Reject_Booking_ShouldBeRejected()
     {
         // Arrange
-        var timeNow = DateTime.Now;
+        var timeNow = DateTime.Now.ToUniversalTime();
 
         var @event = EventsTestsHelper.GetValidEvent();
         var booking = Booking.Create(@event.Id);

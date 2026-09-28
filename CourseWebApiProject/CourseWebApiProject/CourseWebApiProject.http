@@ -40,8 +40,7 @@ Content-Type: application/json
   "title": "updated test event",
   "description": "updated description",
   "startAt": "2027-01-01T00:00:00",
-  "endAt": "2027-01-01T00:01:00",
-  "totalSeats": 4
+  "endAt": "2027-01-01T00:01:00"
 }
 
 ### Delete event

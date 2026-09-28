@@ -1,111 +1,202 @@
-﻿using CourseWebApiProject.Exceptions;
+﻿using CourseWebApiProject.DataAccess;
+using CourseWebApiProject.Dto;
+using CourseWebApiProject.Exceptions;
 using CourseWebApiProject.Interfaces;
 using CourseWebApiProject.Models;
 using CourseWebApiProject.Services;
 using FluentAssertions;
-using Moq;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using System.Collections.Concurrent;
 
 namespace CourseWebApiProject.Tests;
 
 public class BookingServiceTests
 {
-    private readonly Mock<IBookingRepository> _mockBookingRepository;
-    private readonly Mock<IEventRepository> _mockEventRepository;
-    private readonly BookingService _bookingService;
+    private readonly ServiceProvider _serviceProvider;
 
     public BookingServiceTests()
     {
-        _mockBookingRepository = new Mock<IBookingRepository>();
-        _mockEventRepository = new Mock<IEventRepository>();
-        _bookingService = new BookingService(_mockBookingRepository.Object, _mockEventRepository.Object);
+        var dbName = Guid.NewGuid().ToString();
+
+        var services = new ServiceCollection();
+        services.AddDbContext<AppDbContext>(options => options.UseInMemoryDatabase(dbName));
+        services.AddScoped<IEventService, EventService>();
+        services.AddScoped<IBookingService, BookingService>();
+
+        _serviceProvider = services.BuildServiceProvider();
     }
 
     [Fact]
-    public async Task Create_Booking_ShouldCallAddOnce()
+    public async Task CreateBooking_ExistingEvent_Success()
     {
         // Arrange
-        var @event = EventsTestsHelper.GetValidEvent();
-        var eventId = @event.Id;
-        _mockEventRepository.Setup(repo => repo.FindById(eventId)).Returns(@event);
+        var validEventDto = EventsTestsHelper.GetValidEventCreate();
+
+        Guid eventId;
+        int availableSeatsBeforeBooking;
+
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
+            var eventInfo = await eventService.AddEvent(validEventDto);
+            availableSeatsBeforeBooking = eventInfo.AvailableSeats;
+            eventId = eventInfo.Id;
+        }
 
         // Act
-        var response = await _bookingService.CreateBookingAsync(eventId);
+        BookingInfo booking;
+        EventInfo updatedEvent;
+
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
+            var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
+
+            booking = await bookingService.CreateBookingAsync(eventId);
+            updatedEvent = await eventService.GetEvent(eventId);
+        }
 
         // Assert
-        _mockBookingRepository.Verify(repo => repo.AddAsync(It.IsAny<Booking>()), Times.Once);
-        response.Status.Should().Be((int)BookingStatus.Pending);
+        booking.Should().NotBeNull();
+        booking.EventId.Should().Be(eventId);
+        booking.Status.Should().Be((int)BookingStatus.Pending);
+        updatedEvent.AvailableSeats.Should().Be(availableSeatsBeforeBooking - 1);
     }
 
     [Fact]
     public async Task Create_TwoBookings_ShouldCreateDifferentIds()
     {
         // Arrange
-        var @event = EventsTestsHelper.GetValidEvent();
-        var eventId = @event.Id;
-        _mockEventRepository.Setup(repo => repo.FindById(eventId)).Returns(@event);
+        var validEventDto = EventsTestsHelper.GetValidEventCreate();
+
+        Guid eventId;
+
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
+            var eventInfo = await eventService.AddEvent(validEventDto);
+            eventId = eventInfo.Id;
+        }
 
         // Act
-        var firstResponse = await _bookingService.CreateBookingAsync(eventId);
-        var secondResponse = await _bookingService.CreateBookingAsync(eventId);
+        BookingInfo firstBooking, secondBooking;
+
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
+            firstBooking = await bookingService.CreateBookingAsync(eventId);
+            secondBooking = await bookingService.CreateBookingAsync(eventId);
+        }
 
         // Assert
-        _mockBookingRepository.Verify(repo => repo.AddAsync(It.IsAny<Booking>()), Times.Exactly(2));
-        firstResponse.Id.Should().NotBe(secondResponse.Id);
+        firstBooking.Id.Should().NotBe(secondBooking.Id);
     }
 
     [Fact]
-    public async Task Create_NonExistingEvent_ShouldThrowEventNotFoundException()
+    public async Task CreateBookings_ExistingEvent_SuccessUntilNoSeatsLeft()
     {
         // Arrange
-        var eventId = Guid.NewGuid();
-        _mockEventRepository.Setup(repo => repo.ContainsId(eventId)).Returns(false);
+        var validEventDto = EventsTestsHelper.GetValidEventCreate();
+
+        Guid eventId;
+        int availableSeatsBeforeBooking;
+
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
+            var eventInfo = await eventService.AddEvent(validEventDto);
+            eventId = eventInfo.Id;
+            availableSeatsBeforeBooking = eventInfo.AvailableSeats;
+        }
+
+        // Act
+        var bookingIdBag = new ConcurrentBag<Guid>();
+
+        for (int i = 0; i < availableSeatsBeforeBooking; i++)
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
+            var response = await bookingService.CreateBookingAsync(eventId);
+            bookingIdBag.Add(response.Id);
+        }
+
+        // Assert
+        bookingIdBag.Distinct().Count().Should().Be(availableSeatsBeforeBooking);
+
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
+            await Assert.ThrowsAsync<NoAvailableSeatsException>(() => bookingService.CreateBookingAsync(eventId));
+        }
+    }
+
+    [Fact]
+    public async Task CreateBooking_NonExistingEvent_ShouldThrowEventNotFoundException()
+    {
+        // Arrange
+        var validEventDto = EventsTestsHelper.GetValidEventCreate();
+
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
+            var eventInfo = await eventService.AddEvent(validEventDto);
+        }
+
+        var nonExistingEventId = Guid.NewGuid();
 
         // Act & Assert
-        await Assert.ThrowsAsync<EventNotFoundException>(() => _bookingService.CreateBookingAsync(eventId));
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
+            await Assert.ThrowsAsync<EventNotFoundException>(() => bookingService.CreateBookingAsync(nonExistingEventId));
+        }
     }
 
     [Fact]
-    public async Task Change_BookingStatus_ShouldReturnActualStatus()
+    public async Task CreateBooking_RemovedEvent_ShouldThrowEventNotFoundException()
     {
         // Arrange
-        var eventId = Guid.NewGuid();
-        var booking = Booking.Create(eventId);
-        var bookingId = booking.Id;
+        var validEventDto = EventsTestsHelper.GetValidEventCreate();
 
-        _mockEventRepository.Setup(repo => repo.ContainsId(eventId)).Returns(true);
-        _mockBookingRepository.Setup(repo => repo.FindByIdAsync(bookingId)).ReturnsAsync(booking);
+        Guid eventId;
 
-        // Act
-        var initResponse = await _bookingService.GetBookingByIdAsync(bookingId);
-        var initStatus = initResponse.Status;
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
+            var eventInfo = await eventService.AddEvent(validEventDto);
 
-        booking.Confirm();
+            eventId = eventInfo.Id;
+            await eventService.RemoveEvent(eventId);
+        }
 
-        var responseAfterConfirm = await _bookingService.GetBookingByIdAsync(bookingId);
-        var statusAfterConfirm = responseAfterConfirm.Status;
-
-        booking.Reject();
-
-        var responseAfterReject = await _bookingService.GetBookingByIdAsync(bookingId);
-        var statusAfterReject = responseAfterReject.Status;
-
-        // Assert
-        initStatus.Should().Be((int)BookingStatus.Pending);
-        statusAfterConfirm.Should().Be((int)BookingStatus.Confirmed);
-        statusAfterReject.Should().Be((int)BookingStatus.Rejected);
+        // Act & Assert
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
+            await Assert.ThrowsAsync<EventNotFoundException>(() => bookingService.CreateBookingAsync(eventId));
+        }
     }
 
     [Fact]
     public async Task Get_NonExistingId_ShouldThrowBookingNotFoundException()
     {
         // Arrange
-        var @event = EventsTestsHelper.GetValidEvent();
-        var eventId = @event.Id;
-        _mockEventRepository.Setup(repo => repo.FindById(eventId)).Returns(@event);
-        var response = await _bookingService.CreateBookingAsync(eventId);
+        var validEventDto = EventsTestsHelper.GetValidEventCreate();
+
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
+            var eventInfo = await eventService.AddEvent(validEventDto);
+        }
+
         var nonExistingId = Guid.NewGuid();
 
         // Act & Assert
-        await Assert.ThrowsAsync<BookingNotFoundException>(() => _bookingService.GetBookingByIdAsync(nonExistingId));
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
+            await Assert.ThrowsAsync<BookingNotFoundException>(() => bookingService.GetBookingByIdAsync(nonExistingId));
+        }
     }
 }

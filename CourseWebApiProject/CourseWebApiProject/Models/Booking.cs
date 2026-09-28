@@ -21,19 +21,19 @@ public class Booking
             Id = Guid.NewGuid(),
             EventId = eventId,
             Status = BookingStatus.Pending,
-            CreatedAt = DateTime.Now
+            CreatedAt = DateTime.Now.ToUniversalTime(),
         };
     }
 
     public void Confirm()
     {
         Status = BookingStatus.Confirmed;
-        ProcessedAt = DateTime.Now;
+        ProcessedAt = DateTime.Now.ToUniversalTime();
     }
 
     public void Reject()
     {
         Status = BookingStatus.Rejected;
-        ProcessedAt = DateTime.Now;
+        ProcessedAt = DateTime.Now.ToUniversalTime();
     }
 }

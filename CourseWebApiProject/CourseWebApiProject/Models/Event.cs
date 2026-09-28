@@ -28,11 +28,16 @@ public class Event
 
     public static Event Create(string title, string? description, DateTime startAt, DateTime endAt, int totalSeats)
     {
+        ValidateDateTimes(startAt, endAt);
+        ValidateTotalSeats(totalSeats);
+
         return new Event(title, description, startAt, endAt, totalSeats);
     }
 
     public void Update(string title, string? description, DateTime startAt, DateTime endAt)
     {
+        ValidateDateTimes(startAt, endAt);
+
         Title = title;
         Description = description;
         StartAt = startAt;
@@ -53,5 +58,21 @@ public class Event
     public void ReleaseSeats(int count = 1)
     {
         AvailableSeats += count;
+    }
+
+    private static void ValidateDateTimes(DateTime startAt, DateTime endAt)
+    {
+        if (startAt >= endAt)
+        {
+            throw new ArgumentException("Точное время окончания должно быть позже времени начала.");
+        }
+    }
+
+    private static void ValidateTotalSeats(int totalSeats)
+    {
+        if (totalSeats <= 0)
+        {
+            throw new ArgumentException("Количество мест должно быть больше нуля.");
+        }
     }
 }

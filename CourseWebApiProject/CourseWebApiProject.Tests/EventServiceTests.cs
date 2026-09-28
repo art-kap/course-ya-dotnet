@@ -1,169 +1,299 @@
-﻿using CourseWebApiProject.Dto;
+﻿using CourseWebApiProject.DataAccess;
+using CourseWebApiProject.Dto;
 using CourseWebApiProject.Exceptions;
 using CourseWebApiProject.Interfaces;
-using CourseWebApiProject.Mappings;
-using CourseWebApiProject.Models;
 using CourseWebApiProject.Services;
-using Moq;
+using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace CourseWebApiProject.Tests;
 
 public class EventServiceTests
 {
-    private readonly Mock<IEventRepository> _mockRepository;
-    private readonly EventService _eventService;
+    private readonly IEventService _eventService;
 
     public EventServiceTests()
     {
-        _mockRepository = new Mock<IEventRepository>();
-        _eventService = new EventService(_mockRepository.Object);
+        var dbName = Guid.NewGuid().ToString();
+        var services = new ServiceCollection();
+        services.AddDbContext<AppDbContext>(options => options.UseInMemoryDatabase(dbName));
+        services.AddScoped<IEventService, EventService>();
+
+        var serviceProvider = services.BuildServiceProvider();
+
+        _eventService = serviceProvider.GetRequiredService<IEventService>();
     }
 
     [Fact]
-    public void Add_Event_ShouldCallAddOnce()
+    public async Task Add_ValidEvent_Success()
     {
         // Arrange
         var validEvent = EventsTestsHelper.GetValidEventCreate();
 
         // Act
-        var response = _eventService.AddEvent(validEvent);
+        var response = await _eventService.AddEvent(validEvent);
 
         // Assert
-        _mockRepository.Verify(repo => repo.Add(It.IsAny<Event>()), Times.Once);
+        response.Should().NotBeNull();
+        response.Should().BeEquivalentTo(validEvent);
     }
 
     [Fact]
-    public void Add_EventWithInvalidDates_ShouldThrowArgumentException()
+    public async Task Add_EventWithInvalidDates_ShouldThrowArgumentException()
     {
         // Arrange
         var invalidEvent = EventsTestsHelper.GetEventCreateWithInvalidDates();
 
         // Act & Assert
-        Assert.Throws<ArgumentException>(() => _eventService.AddEvent(invalidEvent));
+        await Assert.ThrowsAsync<ArgumentException>(() => _eventService.AddEvent(invalidEvent));
     }
 
     [Fact]
-    public void Add_EventWithInvalidTotalSeats_ShouldThrowArgumentException()
+    public async Task Add_EventWithInvalidTotalSeats_ShouldThrowArgumentException()
     {
         // Arrange
-        var invalidEvent = EventsTestsHelper.GetEventCreateWithInvalidTotalSeats();
+        var invalidEventCreate = EventsTestsHelper.GetEventCreateWithInvalidTotalSeats();
 
         // Act & Assert
-        Assert.Throws<ArgumentException>(() => _eventService.AddEvent(invalidEvent));
+        await Assert.ThrowsAsync<ArgumentException>(() => _eventService.AddEvent(invalidEventCreate));
     }
 
     [Fact]
-    public void Get_ExistingId_ShouldCallFindByIdOnce()
+    public async Task GetEvent_ExistingId_Success()
     {
         // Arrange
-        var validEvent = EventsTestsHelper.GetValidEvent();
-        var id = validEvent.Id;
-        _mockRepository.Setup(repo => repo.FindById(id)).Returns(validEvent);
+        var validEventCreate = EventsTestsHelper.GetValidEventCreate();
+        var eventInfo = await _eventService.AddEvent(validEventCreate);
 
         // Act
-        var response = _eventService.GetEvent(id);
+        var response = await _eventService.GetEvent(eventInfo.Id);
 
         // Assert
-        _mockRepository.Verify(repo => repo.FindById(id), Times.Once);
+        response.Should().NotBeNull();
+        response.Should().BeEquivalentTo(validEventCreate);
     }
 
     [Fact]
-    public void Get_NonExistingId_ShouldThrowEventNotFoundException()
+    public async Task GetEvent_NonExistingId_ShouldThrowEventNotFoundException()
     {
         // Arrange
         var validEvent = EventsTestsHelper.GetValidEventCreate();
-        _eventService.AddEvent(validEvent);
+        await _eventService.AddEvent(validEvent);
         var nonExistingId = Guid.NewGuid();
 
         // Act & Assert
-        Assert.Throws<EventNotFoundException>(() => _eventService.GetEvent(nonExistingId));
+        await Assert.ThrowsAsync<EventNotFoundException>(() => _eventService.GetEvent(nonExistingId));
     }
 
     [Fact]
-    public void Update_ExistingId_ShouldCallUpdateOnce()
-    {
-        // Arrange
-        var validEvent = EventsTestsHelper.GetValidEvent();
-        var id = validEvent.Id;
-        var anotherValidEventDto = EventsTestsHelper.GetValidEventUpdate();
-
-        _mockRepository.Setup(repo => repo.FindById(id)).Returns(validEvent);
-
-        // Act
-        _eventService.UpdateEvent(id, anotherValidEventDto);
-
-        // Assert
-        _mockRepository.Verify(repo => repo.Update(It.IsAny<Event>()), Times.Once);
-    }
-
-    [Fact]
-    public void Update_NonExistingId_ShouldThrowEventNotFoundException()
+    public async Task UpdateEvent_ExistingId_Success()
     {
         // Arrange
         var validEvent = EventsTestsHelper.GetValidEventCreate();
-        _eventService.AddEvent(validEvent);
-        var anotherValidEvent = EventsTestsHelper.GetValidEventUpdate();
+        var eventInfo = await _eventService.AddEvent(validEvent);
+        var eventUpdate = EventsTestsHelper.GetValidEventUpdate();
+
+        // Act
+        await _eventService.UpdateEvent(eventInfo.Id, eventUpdate);
+        var response = await _eventService.GetEvent(eventInfo.Id);
+
+        // Assert
+        response.Should().NotBeNull();
+        response.Should().BeEquivalentTo(eventUpdate);
+    }
+
+
+    [Fact]
+    public async Task UpdateEvent_NonExistingId_ShouldThrowEventNotFoundException()
+    {
+        // Arrange
+        var validEvent = EventsTestsHelper.GetValidEventCreate();
+        await _eventService.AddEvent(validEvent);
+        var eventUpdate = EventsTestsHelper.GetValidEventUpdate();
         var nonExistingId = Guid.NewGuid();
 
         // Act & Assert
-        Assert.Throws<EventNotFoundException>(() => _eventService.UpdateEvent(nonExistingId, anotherValidEvent));
+        await Assert.ThrowsAsync<EventNotFoundException>(() => _eventService.UpdateEvent(nonExistingId, eventUpdate));
     }
 
+
     [Fact]
-    public void Remove_ExistingId_ShouldCallRemoveOnce()
+    public async Task UpdateEvent_InvalidDates_ShouldThrowArgumentException()
     {
         // Arrange
         var validEvent = EventsTestsHelper.GetValidEventCreate();
-        var id = _eventService.AddEvent(validEvent).Id;
-
-        _mockRepository.Setup(repo => repo.RemoveById(id)).Returns(true);
-
-        // Act
-        _eventService.RemoveEvent(id);
-
-        // Assert
-        _mockRepository.Verify(repo => repo.RemoveById(id), Times.Once);
-    }
-
-    [Fact]
-    public void Remove_NonExistingId_ShouldThrowEventNotFoundException()
-    {
-        // Arrange
-        var validEvent = EventsTestsHelper.GetValidEventCreate();
-        _eventService.AddEvent(validEvent);
-        var nonExistingId = Guid.NewGuid();
-
-        // Act & Assert
-        Assert.Throws<EventNotFoundException>(() => _eventService.RemoveEvent(nonExistingId));
-    }
-
-    [Fact]
-    public void Update_InvalidDates_ShouldThrowArgumentException()
-    {
-        // Arrange
-        var validEvent = EventsTestsHelper.GetValidEventCreate();
-        var id = _eventService.AddEvent(validEvent).Id;
+        var eventInfo = await _eventService.AddEvent(validEvent);
         var invalidEvent = EventsTestsHelper.GetEventUpdateWithInvalidDates();
 
         // Act & Assert
-        Assert.Throws<ArgumentException>(() => _eventService.UpdateEvent(id, invalidEvent));
+        await Assert.ThrowsAsync<ArgumentException>(() => _eventService.UpdateEvent(eventInfo.Id, invalidEvent));
     }
 
     [Fact]
-    public void GetAll_ShouldCallGetAllOnce()
+    public async Task RemoveEvent_ExistingId_Success()
+    {
+        // Arrange
+        var validEvent = EventsTestsHelper.GetValidEventCreate();
+        var eventInfo = await _eventService.AddEvent(validEvent);
+
+        // Act
+        await _eventService.RemoveEvent(eventInfo.Id);
+
+        // Assert
+        await Assert.ThrowsAsync<EventNotFoundException>(() => _eventService.GetEvent(eventInfo.Id));
+    }
+
+    [Fact]
+    public async Task RemoveEvent_NonExistingId_ShouldThrowEventNotFoundException()
+    {
+        // Arrange
+        var validEvent = EventsTestsHelper.GetValidEventCreate();
+        await _eventService.AddEvent(validEvent);
+        var nonExistingId = Guid.NewGuid();
+
+        // Act & Assert
+        await Assert.ThrowsAsync<EventNotFoundException>(() => _eventService.RemoveEvent(nonExistingId));
+    }
+
+    [Fact]
+    public async Task GetAll_ThreeEventsOnSinglePage_Success()
     {
         // Arrange
         var events = EventsTestsHelper.GetThreeTestEventCreates(DateTime.Now);
-        var returnedEvents = new List<Event>();
-        events.ForEach(e => returnedEvents.Add(e.ToEvent()));
+        events.ForEach(async e => await _eventService.AddEvent(e));
         var emptyQuery = new EventsQuery(null, null, null, 1, events.Count);
 
-        _mockRepository.Setup(repo => repo.GetAll()).Returns(returnedEvents);
-
         // Act
-        var paginatedResult = _eventService.GetEventsByQuery(emptyQuery);
+        var paginatedResult = await _eventService.GetEventsByQuery(emptyQuery);
 
         // Assert
-        _mockRepository.Verify(repo => repo.GetAll(), Times.Once);
+        paginatedResult.Should().NotBeNull();
+        paginatedResult.EventsCount.Should().Be(events.Count);
+        paginatedResult.CurrentPageNumber.Should().Be(emptyQuery.Page);
+        paginatedResult.CurrentPageSize.Should().Be(events.Count);
+    }
+
+    [Fact]
+    public async Task GetAll_ThreeEventsOnTwoPages_Success()
+    {
+        // Arrange
+        var events = EventsTestsHelper.GetThreeTestEventCreates(DateTime.Now);
+        events.ForEach(async e => await _eventService.AddEvent(e));
+        var firstPageQuery = new EventsQuery(null, null, null, 1, 2);
+        var secondPageQuery = new EventsQuery(null, null, null, 2, 2);
+
+        // Act
+        var firstPageResult = await _eventService.GetEventsByQuery(firstPageQuery);
+        var secondPageResult = await _eventService.GetEventsByQuery(secondPageQuery);
+
+        // Assert
+        firstPageResult.Should().NotBeNull();
+        firstPageResult.EventsCount.Should().Be(events.Count);
+        firstPageResult.CurrentPageNumber.Should().Be(firstPageQuery.Page);
+        firstPageResult.CurrentPageSize.Should().Be(2);
+
+        secondPageResult.Should().NotBeNull();
+        secondPageResult.EventsCount.Should().Be(events.Count);
+        secondPageResult.CurrentPageNumber.Should().Be(secondPageQuery.Page);
+        secondPageResult.CurrentPageSize.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task Filter_Title_Success()
+    {
+        // Arrange
+        var events = EventsTestsHelper.GetThreeTestEventCreates(DateTime.Now);
+        events.ForEach(async e => await _eventService.AddEvent(e));
+        var titleQuery = new EventsQuery("NEXT", null, null);
+
+        // Act
+        var paginatedResult = await _eventService.GetEventsByQuery(titleQuery);
+
+        // Assert
+        paginatedResult.Should().NotBeNull();
+        paginatedResult.EventsCount.Should().Be(1);
+        paginatedResult.CurrentPageEvents.First().Title.Should().Be(EventsTestsHelper.NextMonthTitle);
+    }
+
+    [Fact]
+    public async Task Filter_DateFrom_Success()
+    {
+        // Arrange
+        var startAtCurrentMonth = DateTime.Now;
+        var events = EventsTestsHelper.GetThreeTestEventCreates(startAtCurrentMonth);
+        events.ForEach(async e => await _eventService.AddEvent(e));
+        var titleQuery = new EventsQuery(null, startAtCurrentMonth, null);
+        var expectedTitles = new string[] { EventsTestsHelper.CurrentMonthTitle, EventsTestsHelper.NextMonthTitle };
+
+        // Act
+        var paginatedResult = await _eventService.GetEventsByQuery(titleQuery);
+
+        // Assert
+        paginatedResult.Should().NotBeNull();
+        paginatedResult.EventsCount.Should().Be(2);
+        paginatedResult.CurrentPageEvents.Should().AllSatisfy(e => e.Title.Should().BeOneOf(expectedTitles));
+    }
+
+    [Fact]
+    public async Task Filter_DateTo_Success()
+    {
+        // Arrange
+        var startAtCurrentMonth = DateTime.Now;
+        var durationHours = 2;
+        var events = EventsTestsHelper.GetThreeTestEventCreates(startAtCurrentMonth, durationHours);
+        events.ForEach(async e => await _eventService.AddEvent(e));
+        var titleQuery = new EventsQuery(null, null, startAtCurrentMonth.AddHours(durationHours));
+        var expectedTitles = new string[] { EventsTestsHelper.PreviousMonthTitle, EventsTestsHelper.CurrentMonthTitle };
+
+        // Act
+        var paginatedResult = await _eventService.GetEventsByQuery(titleQuery);
+
+        // Assert
+        paginatedResult.Should().NotBeNull();
+        paginatedResult.EventsCount.Should().Be(2);
+        paginatedResult.CurrentPageEvents.Should().AllSatisfy(e => e.Title.Should().BeOneOf(expectedTitles));
+    }
+
+    [Fact]
+    public async Task Filter_DatesFromTo_Success()
+    {
+        // Arrange
+        var startAtCurrentMonth = DateTime.Now;
+        var durationHours = 2;
+        var events = EventsTestsHelper.GetThreeTestEventCreates(startAtCurrentMonth, 2);
+        events.ForEach(async e => await _eventService.AddEvent(e));
+        var titleQuery = new EventsQuery(null, startAtCurrentMonth, startAtCurrentMonth.AddHours(durationHours));
+
+        // Act
+        var paginatedResult = await _eventService.GetEventsByQuery(titleQuery);
+
+        // Assert
+        paginatedResult.Should().NotBeNull();
+        paginatedResult.EventsCount.Should().Be(1);
+        paginatedResult.CurrentPageEvents.First().Title.Should().Be(EventsTestsHelper.CurrentMonthTitle);
+    }
+
+    [Theory]
+    [InlineData("Current")]
+    [InlineData("cuRRent")]
+    [InlineData("event", 1)]
+    [InlineData("", 10)]
+    public async Task Filter_TitleAndDatesFromTo_Success(string title, int daysMargin = 0)
+    {
+        // Arrange
+        var startAtCurrentMonth = DateTime.Now;
+        var durationHours = 2;
+        var events = EventsTestsHelper.GetThreeTestEventCreates(startAtCurrentMonth, durationHours);
+        events.ForEach(async e => await _eventService.AddEvent(e));
+        var titleQuery = new EventsQuery(title, startAtCurrentMonth.AddDays(-daysMargin), startAtCurrentMonth.AddHours(durationHours).AddDays(daysMargin));
+
+        // Act
+        var paginatedResult = await _eventService.GetEventsByQuery(titleQuery);
+
+        // Assert
+        paginatedResult.Should().NotBeNull();
+        paginatedResult.EventsCount.Should().Be(1);
+        paginatedResult.CurrentPageEvents.First().Title.Should().Be(EventsTestsHelper.CurrentMonthTitle);
     }
 }

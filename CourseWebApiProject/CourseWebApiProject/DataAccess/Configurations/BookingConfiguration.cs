@@ -19,7 +19,7 @@ public class BookingConfiguration : IEntityTypeConfiguration<Booking>
             .IsRequired();
 
         builder.Property(e => e.CreatedAt)
-            .HasColumnType("datetime")
+            .HasColumnType("timestamp with time zone")
             .IsRequired();
 
         builder.Property(e => e.Status)
@@ -27,7 +27,7 @@ public class BookingConfiguration : IEntityTypeConfiguration<Booking>
             .HasConversion<string>();
 
         builder.Property(b => b.ProcessedAt)
-            .HasColumnType("datetime")
+            .HasColumnType("timestamp with time zone")
             .IsRequired(false);
 
         builder.HasIndex(b => b.EventId);

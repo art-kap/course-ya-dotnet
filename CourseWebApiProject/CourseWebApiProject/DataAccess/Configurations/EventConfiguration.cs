@@ -24,11 +24,11 @@ public class EventConfiguration : IEntityTypeConfiguration<Event>
             .IsRequired(false);
 
         builder.Property(p => p.StartAt)
-                .HasColumnType("datetime")
-                .IsRequired();
+            .HasColumnType("timestamp with time zone")
+            .IsRequired();
 
         builder.Property(p => p.EndAt)
-            .HasColumnType("datetime")
+            .HasColumnType("timestamp with time zone")
             .IsRequired();
 
         builder.Property(e => e.TotalSeats)
