@@ -1,18 +1,17 @@
-﻿using CourseWebApiProject.Interfaces;
+﻿using CourseWebApiProject.DataAccess;
+using CourseWebApiProject.Exceptions;
 using CourseWebApiProject.Models;
-using System.Collections.Concurrent;
+using Microsoft.EntityFrameworkCore;
 
 namespace CourseWebApiProject.Services;
 
-public class BookingBackgroundService(IBookingRepository bookingStore, IEventRepository eventStore, ILogger<BookingBackgroundService> logger) : BackgroundService
+public class BookingBackgroundService(IServiceScopeFactory scopeFactory, ILogger<BookingBackgroundService> logger) : BackgroundService
 {
     private static readonly TimeSpan PollingInterval = TimeSpan.FromSeconds(1);
     private static readonly TimeSpan ProcessingDelay = TimeSpan.FromSeconds(2);
 
-    private readonly IBookingRepository _bookingStore = bookingStore;
-    private readonly IEventRepository _eventStore = eventStore;
+    private readonly IServiceScopeFactory _scopeFactory = scopeFactory;
     private readonly ILogger _logger = logger;
-    private readonly ConcurrentDictionary<Guid, SemaphoreSlim> _eventSemaphores = new();
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -20,8 +19,15 @@ public class BookingBackgroundService(IBookingRepository bookingStore, IEventRep
 
         while (!stoppingToken.IsCancellationRequested)
         {
-            var pendingBookings = await _bookingStore.GetPendingAsync();
-            var tasks = pendingBookings.Select(booking => ProcessBookingAsync(booking, stoppingToken));
+            IReadOnlyCollection<Booking> pendingBookings;
+
+            using (var scope = _scopeFactory.CreateScope())
+            {
+                var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                pendingBookings = await context.Bookings.Where(b => b.Status == BookingStatus.Pending).ToListAsync(stoppingToken);
+            }
+
+            var tasks = pendingBookings.Select(booking => ProcessBookingAsync(booking.Id, stoppingToken));
 
             await Task.WhenAll(tasks);
             await Task.Delay(PollingInterval, stoppingToken);
@@ -30,19 +36,20 @@ public class BookingBackgroundService(IBookingRepository bookingStore, IEventRep
         _logger.LogInformation("Фоновый сервис завершает работу.");
     }
 
-    private async Task ProcessBookingAsync(Booking booking, CancellationToken stoppingToken)
+    private async Task ProcessBookingAsync(Guid bookingId, CancellationToken stoppingToken)
     {
         stoppingToken.ThrowIfCancellationRequested();
 
-        _logger.LogInformation($"Начато оформление бронирования {booking.Id}");
+        _logger.LogInformation($"Начато оформление бронирования {bookingId}");
+
+        using var scope = _scopeFactory.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
         // Имитация обработки бронирования
         await Task.Delay(ProcessingDelay, stoppingToken);
 
-        var semaphore = _eventSemaphores.GetOrAdd(booking.EventId, k => new SemaphoreSlim(1, 1));
-        await semaphore.WaitAsync(stoppingToken);
-
-        var @event = _eventStore.FindById(booking.EventId);
+        var booking = await context.Bookings.FindAsync(bookingId, stoppingToken) ?? throw new BookingNotFoundException(bookingId);
+        var @event = await context.Events.FindAsync(booking.EventId, stoppingToken);
 
         try
         {
@@ -57,7 +64,7 @@ public class BookingBackgroundService(IBookingRepository bookingStore, IEventRep
                 _logger.LogInformation($"Бронирование {booking.Id} оформлено.");
             }
 
-            await _bookingStore.UpdateAsync(booking);
+            await context.SaveChangesAsync(stoppingToken);
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
         {
@@ -67,19 +74,10 @@ public class BookingBackgroundService(IBookingRepository bookingStore, IEventRep
         catch (Exception e)
         {
             booking.Reject();
-            await _bookingStore.UpdateAsync(booking);
-
-            if (@event != null)
-            {
-                @event.ReleaseSeats();
-                _eventStore.Update(@event);
-            }
+            @event?.ReleaseSeats();
+            await context.SaveChangesAsync(stoppingToken);
 
             _logger.LogError(e, $"Возникла непредвиденная ошибка при оформлении бронирования {booking.Id}.");
-        }
-        finally
-        {
-            semaphore.Release();
         }
     }
 }

@@ -18,9 +18,9 @@ public class EventsController(IEventService _eventService, IBookingService _book
     [HttpGet]
     [ProducesResponseType(typeof(PaginatedResult), StatusCodes.Status200OK)]
     [Produces("application/json")]
-    public ActionResult<PaginatedResult> GetAll([FromQuery] EventsQuery query)
+    public async Task<ActionResult<PaginatedResult>> GetAll([FromQuery] EventsQuery query)
     {
-        return Ok(_eventService.GetEventsByQuery(query));
+        return Ok(await _eventService.GetEventsByQuery(query));
     }
 
     /// <summary>
@@ -33,9 +33,9 @@ public class EventsController(IEventService _eventService, IBookingService _book
     [ProducesResponseType(typeof(EventInfo), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [Produces("application/json")]
-    public ActionResult<EventInfo> GetById([FromRoute] Guid id)
+    public async Task<ActionResult<EventInfo>> GetById([FromRoute] Guid id)
     {
-        return Ok(_eventService.GetEvent(id));
+        return Ok(await _eventService.GetEvent(id));
     }
 
     /// <summary>
@@ -48,9 +48,9 @@ public class EventsController(IEventService _eventService, IBookingService _book
     [ProducesResponseType(typeof(EventInfo), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [Produces("application/json")]
-    public IActionResult Post([FromBody] EventCreate eventCreate)
+    public async Task<ActionResult<EventInfo>> Post([FromBody] EventCreate eventCreate)
     {
-        var responseDto = _eventService.AddEvent(eventCreate);
+        var responseDto = await _eventService.AddEvent(eventCreate);
         return CreatedAtAction(nameof(GetById), new { id = responseDto.Id }, responseDto);
     }
 
@@ -67,9 +67,9 @@ public class EventsController(IEventService _eventService, IBookingService _book
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [Produces("application/json")]
-    public IActionResult Put([FromRoute] Guid id, [FromBody] EventUpdate eventUpdate)
+    public async Task<IActionResult> Put([FromRoute] Guid id, [FromBody] EventUpdate eventUpdate)
     {
-        _eventService.UpdateEvent(id, eventUpdate);
+        await _eventService.UpdateEvent(id, eventUpdate);
         return NoContent();
     }
 
@@ -83,9 +83,9 @@ public class EventsController(IEventService _eventService, IBookingService _book
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [Produces("application/json")]
-    public IActionResult Delete([FromRoute] Guid id)
+    public async Task<IActionResult> Delete([FromRoute] Guid id)
     {
-        _eventService.RemoveEvent(id);
+        await _eventService.RemoveEvent(id);
         return NoContent();
     }
 

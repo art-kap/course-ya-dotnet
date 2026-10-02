@@ -4,13 +4,13 @@ namespace CourseWebApiProject.Interfaces;
 
 public interface IEventService
 {
-    PaginatedResult GetEventsByQuery(EventsQuery query);
+    Task<PaginatedResult> GetEventsByQuery(EventsQuery query);
 
-    EventInfo GetEvent(Guid eventId);
+    Task<EventInfo> GetEvent(Guid eventId);
 
-    EventInfo AddEvent(EventCreate eventCreate);
+    Task<EventInfo> AddEvent(EventCreate eventCreate);
 
-    void UpdateEvent(Guid eventId, EventUpdate eventUpdate);
+    Task UpdateEvent(Guid eventId, EventUpdate eventUpdate);
 
-    void RemoveEvent(Guid eventId);
+    Task RemoveEvent(Guid eventId);
 }

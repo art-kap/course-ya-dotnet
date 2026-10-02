@@ -7,7 +7,7 @@ public static class EventMapping
 {
     public static Event ToEvent(this EventCreate eventCreate)
     {
-        return new Event(
+        return Event.Create(
             eventCreate.Title,
             eventCreate.Description,
             eventCreate.StartAt!.Value,

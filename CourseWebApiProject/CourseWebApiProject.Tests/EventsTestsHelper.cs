@@ -13,7 +13,7 @@ public static class EventsTestsHelper
 
     public static EventCreate GetValidEventCreate(int totalSeats = DefaultTotalSeats)
     {
-        var startAt = DateTime.Now;
+        var startAt = DateTime.Now.ToUniversalTime();
         var endAtValid = startAt.AddHours(1);
 
         return new EventCreate("test title", "", startAt, endAtValid, totalSeats);
@@ -21,7 +21,7 @@ public static class EventsTestsHelper
 
     public static EventCreate GetAnotherValidEventCreate(int totalSeats = DefaultTotalSeats)
     {
-        var startAt = DateTime.Now;
+        var startAt = DateTime.Now.ToUniversalTime();
         var endAtValid = startAt.AddHours(1);
 
         return new EventCreate("test title", "", startAt, endAtValid, totalSeats);
@@ -29,7 +29,7 @@ public static class EventsTestsHelper
 
     public static EventUpdate GetValidEventUpdate()
     {
-        var startAt = DateTime.Now.AddDays(1);
+        var startAt = DateTime.Now.ToUniversalTime().AddDays(1);
         var endAtValid = startAt.AddHours(1);
 
         return new EventUpdate("sample title", "sample description", startAt, endAtValid);
@@ -37,7 +37,7 @@ public static class EventsTestsHelper
 
     public static EventCreate GetEventCreateWithInvalidDates()
     {
-        var startAt = DateTime.Now;
+        var startAt = DateTime.Now.ToUniversalTime();
         var endAtInvalid = startAt;
 
         return new EventCreate("test title", "", startAt, endAtInvalid, DefaultTotalSeats);
@@ -45,7 +45,7 @@ public static class EventsTestsHelper
 
     public static EventUpdate GetEventUpdateWithInvalidDates()
     {
-        var startAt = DateTime.Now;
+        var startAt = DateTime.Now.ToUniversalTime();
         var endAtInvalid = startAt;
 
         return new EventUpdate("test title", "", startAt, endAtInvalid);
@@ -53,7 +53,7 @@ public static class EventsTestsHelper
 
     public static EventCreate GetEventCreateWithInvalidTotalSeats()
     {
-        var startAt = DateTime.Now;
+        var startAt = DateTime.Now.ToUniversalTime();
         var endAtValid = startAt.AddHours(1);
 
         return new EventCreate("test title", "", startAt, endAtValid, 0);

@@ -1,46 +1,43 @@
-﻿using CourseWebApiProject.Dto;
+﻿using CourseWebApiProject.DataAccess;
+using CourseWebApiProject.Dto;
 using CourseWebApiProject.Exceptions;
 using CourseWebApiProject.Interfaces;
 using CourseWebApiProject.Mappings;
 using CourseWebApiProject.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace CourseWebApiProject.Services;
 
-public class EventService(IEventRepository eventRepository) : IEventService
+public class EventService(AppDbContext context) : IEventService
 {
-    private readonly IEventRepository _eventRepository = eventRepository;
+    private readonly AppDbContext _context = context;
 
-    public EventInfo AddEvent(EventCreate eventCreate)
+    public async Task<EventInfo> AddEvent(EventCreate eventCreate)
     {
-        ValidateDateTimes(eventCreate.StartAt!.Value, eventCreate.EndAt!.Value);
-        ValidateTotalSeats(eventCreate.TotalSeats!.Value);
-
         var newEvent = eventCreate.ToEvent();
-        _eventRepository.Add(newEvent);
+        await _context.Events.AddAsync(newEvent);
+        await _context.SaveChangesAsync();
 
         return newEvent.ToEventInfo();
     }
 
-    public void UpdateEvent(Guid eventId, EventUpdate eventUpdate)
+    public async Task UpdateEvent(Guid eventId, EventUpdate eventUpdate)
     {
-        ValidateDateTimes(eventUpdate.StartAt!.Value, eventUpdate.EndAt!.Value);
-
-        var eventToUpdate = _eventRepository.FindById(eventId) ?? throw new EventNotFoundException(eventId);
+        var eventToUpdate = await _context.Events.FindAsync(eventId) ?? throw new EventNotFoundException(eventId);
         eventToUpdate.Update(eventUpdate.Title, eventUpdate.Description, eventUpdate.StartAt!.Value, eventUpdate.EndAt!.Value);
-        _eventRepository.Update(eventToUpdate);
+        await _context.SaveChangesAsync();
     }
 
-    public void RemoveEvent(Guid eventId)
+    public async Task RemoveEvent(Guid eventId)
     {
-        if (!_eventRepository.RemoveById(eventId))
-        {
-            throw new EventNotFoundException(eventId);
-        }
+        var eventToRemove = await _context.Events.FindAsync(eventId) ?? throw new EventNotFoundException(eventId);
+        _context.Events.Remove(eventToRemove);
+        await _context.SaveChangesAsync();
     }
 
-    public PaginatedResult GetEventsByQuery(EventsQuery query)
+    public async Task<PaginatedResult> GetEventsByQuery(EventsQuery query)
     {
-        IEnumerable<Event> filteredEvents = _eventRepository.GetAll();
+        IEnumerable<Event> filteredEvents = await _context.Events.ToListAsync();
 
         if (query.Title != null)
         {
@@ -64,25 +61,9 @@ public class EventService(IEventRepository eventRepository) : IEventService
         return new PaginatedResult(eventsCount, eventsArray, query.Page, eventsArray.Length);
     }
 
-    public EventInfo GetEvent(Guid eventId)
+    public async Task<EventInfo> GetEvent(Guid eventId)
     {
-        var eventToGet = _eventRepository.FindById(eventId) ?? throw new EventNotFoundException(eventId);
+        var eventToGet = await _context.Events.FindAsync(eventId) ?? throw new EventNotFoundException(eventId);
         return eventToGet.ToEventInfo();
-    }
-
-    private void ValidateDateTimes(DateTime startAt, DateTime endAt)
-    {
-        if (startAt >= endAt)
-        {
-            throw new ArgumentException("Точное время окончания должно быть позже времени начала.");
-        }
-    }
-
-    private void ValidateTotalSeats(int totalSeats)
-    {
-        if (totalSeats <= 0)
-        {
-            throw new ArgumentException("Количество мест должно быть больше нуля.");
-        }
     }
 }
