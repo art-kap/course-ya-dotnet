@@ -1,6 +1,7 @@
 using CourseWebApiProject.DataAccess;
 using CourseWebApiProject.Interfaces;
 using CourseWebApiProject.Middleware;
+using CourseWebApiProject.Repository;
 using CourseWebApiProject.Services;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection;
@@ -12,6 +13,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 
 builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddScoped<IEventRepository, EventRepository>();
+builder.Services.AddScoped<IBookingRepository, BookingRepository>();
 builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddHostedService<BookingBackgroundService>();

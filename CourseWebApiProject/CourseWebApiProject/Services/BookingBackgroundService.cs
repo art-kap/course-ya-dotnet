@@ -1,7 +1,6 @@
-﻿using CourseWebApiProject.DataAccess;
-using CourseWebApiProject.Exceptions;
+﻿using CourseWebApiProject.Exceptions;
+using CourseWebApiProject.Interfaces;
 using CourseWebApiProject.Models;
-using Microsoft.EntityFrameworkCore;
 
 namespace CourseWebApiProject.Services;
 
@@ -23,8 +22,8 @@ public class BookingBackgroundService(IServiceScopeFactory scopeFactory, ILogger
 
             using (var scope = _scopeFactory.CreateScope())
             {
-                var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-                pendingBookings = await context.Bookings.Where(b => b.Status == BookingStatus.Pending).ToListAsync(stoppingToken);
+                var bookingStore = scope.ServiceProvider.GetRequiredService<IBookingRepository>();
+                pendingBookings = await bookingStore.GetPending();
             }
 
             var tasks = pendingBookings.Select(booking => ProcessBookingAsync(booking.Id, stoppingToken));
@@ -43,13 +42,14 @@ public class BookingBackgroundService(IServiceScopeFactory scopeFactory, ILogger
         _logger.LogInformation($"Начато оформление бронирования {bookingId}");
 
         using var scope = _scopeFactory.CreateScope();
-        var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var bookingStore = scope.ServiceProvider.GetRequiredService<IBookingRepository>();
+        var eventStore = scope.ServiceProvider.GetRequiredService<IEventRepository>();
 
         // Имитация обработки бронирования
         await Task.Delay(ProcessingDelay, stoppingToken);
 
-        var booking = await context.Bookings.FindAsync(bookingId, stoppingToken) ?? throw new BookingNotFoundException(bookingId);
-        var @event = await context.Events.FindAsync(booking.EventId, stoppingToken);
+        var booking = await bookingStore.FindAsync(bookingId, stoppingToken) ?? throw new BookingNotFoundException(bookingId);
+        var @event = await eventStore.FindAsync(booking.EventId, stoppingToken);
 
         try
         {
@@ -64,7 +64,7 @@ public class BookingBackgroundService(IServiceScopeFactory scopeFactory, ILogger
                 _logger.LogInformation($"Бронирование {booking.Id} оформлено.");
             }
 
-            await context.SaveChangesAsync(stoppingToken);
+            await bookingStore.SaveChangesAsync();
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
         {
@@ -75,7 +75,8 @@ public class BookingBackgroundService(IServiceScopeFactory scopeFactory, ILogger
         {
             booking.Reject();
             @event?.ReleaseSeats();
-            await context.SaveChangesAsync(stoppingToken);
+
+            await bookingStore.SaveChangesAsync();
 
             _logger.LogError(e, $"Возникла непредвиденная ошибка при оформлении бронирования {booking.Id}.");
         }

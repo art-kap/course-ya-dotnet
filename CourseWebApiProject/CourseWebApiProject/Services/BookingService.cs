@@ -1,5 +1,4 @@
-﻿using CourseWebApiProject.DataAccess;
-using CourseWebApiProject.Dto;
+﻿using CourseWebApiProject.Dto;
 using CourseWebApiProject.Exceptions;
 using CourseWebApiProject.Interfaces;
 using CourseWebApiProject.Mappings;
@@ -7,9 +6,10 @@ using CourseWebApiProject.Models;
 
 namespace CourseWebApiProject.Services;
 
-public class BookingService(AppDbContext context) : IBookingService
+public class BookingService(IBookingRepository bookingStore, IEventRepository eventStore) : IBookingService
 {
-    private readonly AppDbContext _context = context;
+    private readonly IBookingRepository _bookingStore = bookingStore;
+    private readonly IEventRepository _eventStore = eventStore;
     private readonly static SemaphoreSlim CreateBookingSemaphore = new(1, 1);
 
     public async Task<BookingInfo> CreateBookingAsync(Guid eventId)
@@ -20,7 +20,7 @@ public class BookingService(AppDbContext context) : IBookingService
 
         try
         {
-            var @event = await _context.Events.FindAsync(eventId) ?? throw new EventNotFoundException(eventId);
+            var @event = await _eventStore.FindAsync(eventId) ?? throw new EventNotFoundException(eventId);
             var canReserve = @event.TryReserveSeats();
 
             if (!canReserve)
@@ -29,8 +29,7 @@ public class BookingService(AppDbContext context) : IBookingService
             }
 
             bookingToAdd = Booking.Create(eventId);
-            await _context.Bookings.AddAsync(bookingToAdd);
-            await _context.SaveChangesAsync();
+            await _bookingStore.Add(bookingToAdd);
         }
         finally
         {
@@ -42,7 +41,7 @@ public class BookingService(AppDbContext context) : IBookingService
 
     public async Task<BookingInfo> GetBookingByIdAsync(Guid bookingId)
     {
-        var bookingToGet = await _context.Bookings.FindAsync(bookingId) ?? throw new BookingNotFoundException(bookingId);
+        var bookingToGet = await _bookingStore.FindAsync(bookingId) ?? throw new BookingNotFoundException(bookingId);
         return bookingToGet.ToInfo();
     }
 }
