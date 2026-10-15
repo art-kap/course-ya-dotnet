@@ -3,6 +3,7 @@ using CourseWebApiProject.Dto;
 using CourseWebApiProject.Exceptions;
 using CourseWebApiProject.Interfaces;
 using CourseWebApiProject.Models;
+using CourseWebApiProject.Repository;
 using CourseWebApiProject.Services;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
@@ -25,6 +26,8 @@ public class BookingProcessingTests
         var services = new ServiceCollection();
         services.AddDbContext<AppDbContext>(options => options.UseInMemoryDatabase(dbName));
         services.AddSingleton(new Mock<ILogger<BookingBackgroundService>>().Object);
+        services.AddScoped<IEventRepository, EventRepository>();
+        services.AddScoped<IBookingRepository, BookingRepository>();
         services.AddScoped<IEventService, EventService>();
         services.AddScoped<IBookingService, BookingService>();
         services.AddHostedService<BookingBackgroundService>();

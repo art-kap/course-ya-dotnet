@@ -40,6 +40,7 @@ public class EventRepository(AppDbContext context) : IEventRepository
         }
 
         _context.Events.Remove(@event);
+        await _context.SaveChangesAsync(ct);
         return true;
     }
 
