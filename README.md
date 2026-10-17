@@ -1,12 +1,14 @@
 # course-ya-dotnet
 Проектные работы курса .NET
 
-## Практическая работа №5
+## Практическая работа №6
 В данной работе реализованы:
 * базовый REST API для создания, просмотра, обновления и удаления мероприятий;
 * базовый REST API для создания и просмотра бронирований на мероприятия;
 * хранение мероприятий и бронирований в БД PostgreSQL;
-* фоновый сервис для параллельной обработки поступивших бронирований.
+* управление схемой БД посредством миграций Entity Framework Core;
+* фоновый сервис для параллельной обработки поступивших бронирований;
+* юнит-тесты для позитивных и негативных сценариев.
 
 ## Запуск и тестирование проекта
 Перед запуском нужно перейти из корневой папки в папку солюшена
@@ -24,12 +26,14 @@ dotnet build
 dotnet test
 ```
 
+Перед запуском интеграционных тестов необходимо запустить Docker.
+
 ### Запуск проекта
 ```bash
 dotnet run --project CourseWebApiProject
 ```
 
-### База данных
+## База данных
 Для работы базы данных нужно запустить PostgreSQL из файла ```docker-compose.yml``` в папке ```postgres```.
 
 В файле ```appsettings.json``` прописана строка подключения:
@@ -38,9 +42,21 @@ dotnet run --project CourseWebApiProject
     "DefaultConnection": "Host=localhost;Port=5432;Database=eventapi;Username=postgres;Password=postgres"
   }
 ```
-Cхема БД создаётся автоматически при запуске проекта через ```EnsureCreated```.
+### Миграции EF Core
+Схема БД управляется миграциями Entity Framework. При запуске проекта выполняется применение миграций через ```Migrate```.
 
-В тестах используется InMemory-провайдер, предоставленный nuget-пакетом ```Microsoft.EntityFrameworkCore.InMemory```.
+Создание новой миграции
+```
+dotnet ef migrations add <Имя_Миграции> --project CourseWebApiProject
+```
+Применение миграций
+```
+dotnet ef database update --project CourseWebApiProject
+```
+### Тестирование БД
+При тестировании сервисов обработки событий и бронирований используется InMemory-провайдер, предоставленный nuget-пакетом ```Microsoft.EntityFrameworkCore.InMemory```.
+
+Интеграционные тесты выполняются в изолированных контейнерах, предоставленных nuget-пакетом ```Testcontainers.PostgreSql```.
 
 ## Swagger
 JSON-документация доступна по адресу http://localhost:5109/swagger/v1/swagger.json
