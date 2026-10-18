@@ -24,7 +24,7 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
 
     private Task HandleExceptionAsync(HttpContext context, Exception exception)
     {
-        context.Response.ContentType = "application/json";
+        context.Response.ContentType = "application/problem+json";
 
         HttpStatusCode statusCode;
         string title, message;

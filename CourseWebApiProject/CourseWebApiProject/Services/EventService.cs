@@ -1,43 +1,44 @@
-﻿using CourseWebApiProject.DataAccess;
-using CourseWebApiProject.Dto;
+﻿using CourseWebApiProject.Dto;
 using CourseWebApiProject.Exceptions;
 using CourseWebApiProject.Interfaces;
 using CourseWebApiProject.Mappings;
 using CourseWebApiProject.Models;
-using Microsoft.EntityFrameworkCore;
 
 namespace CourseWebApiProject.Services;
 
-public class EventService(AppDbContext context) : IEventService
+public class EventService(IEventRepository eventStore) : IEventService
 {
-    private readonly AppDbContext _context = context;
+    private readonly IEventRepository _eventStore = eventStore;
 
     public async Task<EventInfo> AddEvent(EventCreate eventCreate)
     {
         var newEvent = eventCreate.ToEvent();
-        await _context.Events.AddAsync(newEvent);
-        await _context.SaveChangesAsync();
+        await _eventStore.Add(newEvent);
 
         return newEvent.ToEventInfo();
     }
 
     public async Task UpdateEvent(Guid eventId, EventUpdate eventUpdate)
     {
-        var eventToUpdate = await _context.Events.FindAsync(eventId) ?? throw new EventNotFoundException(eventId);
+        var eventToUpdate = await _eventStore.FindAsync(eventId) ?? throw new EventNotFoundException(eventId);
         eventToUpdate.Update(eventUpdate.Title, eventUpdate.Description, eventUpdate.StartAt!.Value, eventUpdate.EndAt!.Value);
-        await _context.SaveChangesAsync();
+
+        await _eventStore.SaveChangesAsync();
     }
 
     public async Task RemoveEvent(Guid eventId)
     {
-        var eventToRemove = await _context.Events.FindAsync(eventId) ?? throw new EventNotFoundException(eventId);
-        _context.Events.Remove(eventToRemove);
-        await _context.SaveChangesAsync();
+        var okRemoved = await _eventStore.RemoveById(eventId);
+
+        if (!okRemoved)
+        {
+            throw new EventNotFoundException(eventId);
+        }
     }
 
     public async Task<PaginatedResult> GetEventsByQuery(EventsQuery query)
     {
-        IEnumerable<Event> filteredEvents = await _context.Events.ToListAsync();
+        IEnumerable<Event> filteredEvents = await _eventStore.GetAll();
 
         if (query.Title != null)
         {
@@ -63,7 +64,7 @@ public class EventService(AppDbContext context) : IEventService
 
     public async Task<EventInfo> GetEvent(Guid eventId)
     {
-        var eventToGet = await _context.Events.FindAsync(eventId) ?? throw new EventNotFoundException(eventId);
+        var eventToGet = await _eventStore.FindAsync(eventId) ?? throw new EventNotFoundException(eventId);
         return eventToGet.ToEventInfo();
     }
 }

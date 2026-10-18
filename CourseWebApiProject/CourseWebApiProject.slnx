@@ -1,4 +1,5 @@
 <Solution>
+  <Project Path="CourseWebApiProject.IntegrationTests/CourseWebApiProject.IntegrationTests.csproj" Id="3028ac06-2d81-4f0a-8190-c81a4db806ec" />
   <Project Path="CourseWebApiProject.Tests/CourseWebApiProject.Tests.csproj" Id="aead8ddd-7d3d-4787-a3c0-b0f5f0a1da1e" />
   <Project Path="CourseWebApiProject/CourseWebApiProject.csproj" />
 </Solution>

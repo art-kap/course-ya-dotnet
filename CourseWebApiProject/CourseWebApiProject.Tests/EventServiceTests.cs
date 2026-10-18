@@ -2,6 +2,7 @@
 using CourseWebApiProject.Dto;
 using CourseWebApiProject.Exceptions;
 using CourseWebApiProject.Interfaces;
+using CourseWebApiProject.Repository;
 using CourseWebApiProject.Services;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
@@ -18,6 +19,7 @@ public class EventServiceTests
         var dbName = Guid.NewGuid().ToString();
         var services = new ServiceCollection();
         services.AddDbContext<AppDbContext>(options => options.UseInMemoryDatabase(dbName));
+        services.AddScoped<IEventRepository, EventRepository>();
         services.AddScoped<IEventService, EventService>();
 
         var serviceProvider = services.BuildServiceProvider();
