@@ -7,13 +7,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CourseWebApiProject.IntegrationTests;
 
-public class EventRepositoryTests : BaseRepositoryTests
+[Collection("Database collection")]
+public class EventRepositoryTests(PostgreSqlFixture fixture) : BaseRepositoryTests(fixture)
 {
     [Fact]
     public async Task Add_Event_SavesEventToDatabase()
     {
-        await ResetDatabaseAsync();
-
         // Arrange
         var @event = GetTestEvent();
         var eventId = @event.Id;
@@ -37,8 +36,6 @@ public class EventRepositoryTests : BaseRepositoryTests
     [Fact]
     public async Task FindEvent_ExistingId_EventFound()
     {
-        await ResetDatabaseAsync();
-
         // Arrange
         var eventCreate = GetTestEventCreate();
         Guid eventId;
@@ -76,8 +73,6 @@ public class EventRepositoryTests : BaseRepositoryTests
     [Fact]
     public async Task Find_NonExistingId_EventNotFound()
     {
-        await ResetDatabaseAsync();
-
         // Arrange
         var nonExistingId = Guid.NewGuid();
 
@@ -101,8 +96,6 @@ public class EventRepositoryTests : BaseRepositoryTests
     [Fact]
     public async Task Add_DuplicateEvent_ThrowsDbUpdateException()
     {
-        await ResetDatabaseAsync();
-
         // Arrange
         var @event = GetTestEvent();
 
@@ -123,8 +116,6 @@ public class EventRepositoryTests : BaseRepositoryTests
     [Fact]
     public async Task Update_ExistingEvent_SaveChangesToDatabase()
     {
-        await ResetDatabaseAsync();
-
         // Arrange
         Guid eventId;
         int totalSeats, availableSeats;
@@ -171,8 +162,6 @@ public class EventRepositoryTests : BaseRepositoryTests
     [Fact]
     public async Task Remove_ExistingId_ShouldReturnTrue()
     {
-        await ResetDatabaseAsync();
-
         // Arrange
         var @event = GetTestEvent();
         var eventId = @event.Id;
@@ -206,8 +195,6 @@ public class EventRepositoryTests : BaseRepositoryTests
     [Fact]
     public async Task Remove_NonExistingId_ShouldReturnFalse()
     {
-        await ResetDatabaseAsync();
-
         // Arrange
         var nonExistingId = Guid.NewGuid();
 
@@ -234,8 +221,6 @@ public class EventRepositoryTests : BaseRepositoryTests
     [Fact]
     public async Task Remove_EventWithBooking_ShouldThrowsDbUpdateException()
     {
-        await ResetDatabaseAsync();
-
         // Arrange
         Guid eventId;
 
@@ -264,8 +249,6 @@ public class EventRepositoryTests : BaseRepositoryTests
     [Fact]
     public async Task GetAll_Events_EveryEventExists()
     {
-        await ResetDatabaseAsync();
-
         // Arrange
         var eventsCount = 10;
         var eventIds = new List<Guid>();
@@ -303,8 +286,6 @@ public class EventRepositoryTests : BaseRepositoryTests
     [Fact]
     public async Task Load_Include_ReturnsEventWithBookings()
     {
-        await ResetDatabaseAsync();
-
         // Arrange
         Guid eventId;
         var expectedBookingIds = new List<string>();

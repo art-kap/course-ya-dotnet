@@ -2,37 +2,18 @@
 using CourseWebApiProject.Dto;
 using CourseWebApiProject.Mappings;
 using CourseWebApiProject.Models;
-using Microsoft.EntityFrameworkCore;
-using Testcontainers.PostgreSql;
 
 namespace CourseWebApiProject.IntegrationTests;
 
-public abstract class BaseRepositoryTests : IAsyncLifetime
+public abstract class BaseRepositoryTests(PostgreSqlFixture fixture) : IAsyncLifetime
 {
-    private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:16-alpine").Build();
+    private readonly PostgreSqlFixture _fixture = fixture;
 
-    public async Task InitializeAsync() => await _postgres.StartAsync();
-    public async Task DisposeAsync() => await _postgres.DisposeAsync();
+    public AppDbContext CreateContext() => _fixture.CreateContext();
 
-    public virtual AppDbContext CreateContext()
-    {
-        var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseNpgsql(GetTestContainerConnectionString())
-            .Options;
+    public Task InitializeAsync() => Task.CompletedTask;
 
-        var context = new AppDbContext(options);
-        context.Database.EnsureCreated();
-        return context;
-    }
-
-    protected async Task ResetDatabaseAsync()
-    {
-        await using var context = CreateContext();
-        await context.Database.ExecuteSqlRawAsync(
-            "TRUNCATE TABLE events, bookings RESTART IDENTITY CASCADE");
-    }
-
-    protected string GetTestContainerConnectionString() => _postgres.GetConnectionString();
+    public async Task DisposeAsync() => await _fixture.ResetDatabaseAsync();
 
     protected EventCreate GetTestEventCreate()
     {

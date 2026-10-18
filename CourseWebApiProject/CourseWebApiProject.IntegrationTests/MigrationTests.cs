@@ -1,27 +1,14 @@
-﻿using CourseWebApiProject.DataAccess;
-using FluentAssertions;
+﻿using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 
 namespace CourseWebApiProject.IntegrationTests;
 
-public class MigrationTests : BaseRepositoryTests
+[Collection("Database collection")]
+public class MigrationTests(PostgreSqlFixture fixture) : BaseRepositoryTests(fixture)
 {
-    public override AppDbContext CreateContext()
-    {
-        var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseNpgsql(GetTestContainerConnectionString())
-            .Options;
-
-        var context = new AppDbContext(options);
-        context.Database.Migrate();
-        return context;
-    }
-
     [Fact]
     public async Task ApplyMigrations_ShouldCreateDatabaseAndTablesWithoutErrors()
     {
-        await ResetDatabaseAsync();
-
         // Arrange
         var expectedTableNames = new List<string> { "events", "bookings" };
         var sqlCommand = "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public';";

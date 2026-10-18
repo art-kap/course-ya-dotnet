@@ -5,13 +5,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CourseWebApiProject.IntegrationTests;
 
-public class BookingRepositoryTests : BaseRepositoryTests
+[Collection("Database collection")]
+public class BookingRepositoryTests(PostgreSqlFixture fixture) : BaseRepositoryTests(fixture)
 {
     [Fact]
     public async Task FindBooking_ExistingId_BookingFound()
     {
-        await ResetDatabaseAsync();
-
         // Arrange
         Guid eventId, bookingId;
         Booking booking;
@@ -52,8 +51,6 @@ public class BookingRepositoryTests : BaseRepositoryTests
     [Fact]
     public async Task FindBooking_NonExistingId_BookingNotFound()
     {
-        await ResetDatabaseAsync();
-
         // Arrange
         Guid nonExistingId = Guid.NewGuid();
 
@@ -82,8 +79,6 @@ public class BookingRepositoryTests : BaseRepositoryTests
     [Fact]
     public async Task Add_DuplicateBooking_ThrowsDbUpdateException()
     {
-        await ResetDatabaseAsync();
-
         // Arrange
         var @event = GetTestEvent();
         var booking = Booking.Create(@event.Id);
@@ -108,8 +103,6 @@ public class BookingRepositoryTests : BaseRepositoryTests
     [Fact]
     public async Task AddBooking_NonExistingEvent_ThrowsDbUpdateException()
     {
-        await ResetDatabaseAsync();
-
         // Arrange
         var nonExistingEventId = Guid.NewGuid();
 
@@ -132,8 +125,6 @@ public class BookingRepositoryTests : BaseRepositoryTests
     [Fact]
     public async Task GetPending_RandomChoiceForPendingBooking_ReturnsPendingBooking()
     {
-        await ResetDatabaseAsync();
-
         // Arrange
         Guid pendingBookingId = default;
 
@@ -182,8 +173,6 @@ public class BookingRepositoryTests : BaseRepositoryTests
     [Fact]
     public async Task Load_Include_ReturnsBookingWithEvent()
     {
-        await ResetDatabaseAsync();
-
         // Arrange
         Guid eventId, bookingId;
 
