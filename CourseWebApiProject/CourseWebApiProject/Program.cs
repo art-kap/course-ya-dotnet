@@ -1,10 +1,9 @@
-using CourseWebApi.Application.Interfaces;
 using CourseWebApiProject.DataAccess;
 using CourseWebApiProject.Middleware;
-using CourseWebApiProject.Repository;
-using CourseWebApiProject.Services;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection;
+using CourseWebApi.Application;
+using CourseWebApi.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,12 +11,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 
-builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
-builder.Services.AddScoped<IEventRepository, EventRepository>();
-builder.Services.AddScoped<IBookingRepository, BookingRepository>();
-builder.Services.AddScoped<IEventService, EventService>();
-builder.Services.AddScoped<IBookingService, BookingService>();
-builder.Services.AddHostedService<BookingBackgroundService>();
+builder.Services.AddApplicationServices();
+builder.Services.AddInfrastructureServices(builder.Configuration);
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
