@@ -3,7 +3,7 @@ using CourseWebApi.Domain.Entities;
 using CourseWebApiProject.DataAccess;
 using Microsoft.EntityFrameworkCore;
 
-namespace CourseWebApiProject.Repository;
+namespace CourseWebApi.Infrastructure.Persistence.Repositories;
 
 public class BookingRepository(AppDbContext context) : IBookingRepository
 {

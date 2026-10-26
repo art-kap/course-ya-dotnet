@@ -2,8 +2,8 @@
 using CourseWebApi.Application.Interfaces;
 using CourseWebApi.Domain.Entities;
 using CourseWebApi.Domain.Exceptions;
+using CourseWebApi.Infrastructure.Persistence.Repositories;
 using CourseWebApiProject.DataAccess;
-using CourseWebApiProject.Repository;
 using CourseWebApiProject.Services;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;

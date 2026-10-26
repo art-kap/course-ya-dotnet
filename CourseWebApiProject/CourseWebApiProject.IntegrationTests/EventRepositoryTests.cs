@@ -1,6 +1,6 @@
 ﻿using CourseWebApi.Application.Mappings;
 using CourseWebApi.Domain.Entities;
-using CourseWebApiProject.Repository;
+using CourseWebApi.Infrastructure.Persistence.Repositories;
 using FluentAssertions;
 using FluentAssertions.Extensions;
 using Microsoft.EntityFrameworkCore;

@@ -1,5 +1,5 @@
 ﻿using CourseWebApi.Domain.Entities;
-using CourseWebApiProject.Repository;
+using CourseWebApi.Infrastructure.Persistence.Repositories;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 
