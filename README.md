@@ -1,7 +1,7 @@
 # course-ya-dotnet
 Проектные работы курса .NET
 
-## Практическая работа №6
+## Практическая работа (спринт 7)
 В данной работе реализованы:
 * базовый REST API для создания, просмотра, обновления и удаления мероприятий;
 * базовый REST API для создания и просмотра бронирований на мероприятия;
@@ -9,6 +9,12 @@
 * управление схемой БД посредством миграций Entity Framework Core;
 * фоновый сервис для параллельной обработки поступивших бронирований;
 * юнит-тесты для позитивных и негативных сценариев.
+
+Архитектура приложения соответствует принципам **Clean Architecture** и содержит слои:
+- ```CourseWebApiProject.Domain``` - проект с доменными сущностями (мероприятие, бронирование)
+- ```CourseWebApiProject.Application``` - определение интерфейсов, логики приложения, сценариев **Use Case**
+- ```CourseWebApiProject.Infrastructure``` - определение взаимодействия с БД, фонового сервиса обработки бронирований
+- ```CourseWebApiProject``` - слой **Presentation**, содержащий точку входа в приложение, эндпоинты, глобальный обработчик исключений
 
 ## Запуск и тестирование проекта
 Перед запуском нужно перейти из корневой папки в папку солюшена
@@ -47,11 +53,11 @@ dotnet run --project CourseWebApiProject
 
 Создание новой миграции
 ```
-dotnet ef migrations add <Имя_Миграции> --project CourseWebApiProject
+dotnet ef migrations add <Имя_Миграции> --project CourseWebApi.Infrastructure --startup-project CourseWebApiProject
 ```
 Применение миграций
 ```
-dotnet ef database update --project CourseWebApiProject
+dotnet ef database update --project CourseWebApi.Infrastructure --startup-project CourseWebApiProject
 ```
 ### Тестирование БД
 При тестировании сервисов обработки событий и бронирований используется InMemory-провайдер, предоставленный nuget-пакетом ```Microsoft.EntityFrameworkCore.InMemory```.
@@ -370,4 +376,4 @@ http://localhost:5109/bookings/1e2cf46a-dae6-4ab6-9302-9d9d9160e01c
 }
 ```
 ## Использование примитивов синхронизации
-В процессе бронирования используется ```semaphoreSlim``` для защиты записи в хранилища событий и бронирований.
+В процессе бронирования используется ```SemaphoreSlim``` для защиты записи в хранилища событий и бронирований.
