@@ -1,8 +1,8 @@
-﻿using CourseWebApi.Domain.Entities;
+﻿using CourseWebApi.Application.Dto;
+using CourseWebApi.Application.Interfaces;
+using CourseWebApi.Domain.Entities;
 using CourseWebApi.Domain.Exceptions;
 using CourseWebApiProject.DataAccess;
-using CourseWebApiProject.Dto;
-using CourseWebApiProject.Interfaces;
 using CourseWebApiProject.Repository;
 using CourseWebApiProject.Services;
 using FluentAssertions;

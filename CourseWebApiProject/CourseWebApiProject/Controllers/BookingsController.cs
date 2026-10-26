@@ -1,5 +1,5 @@
-﻿using CourseWebApiProject.Dto;
-using CourseWebApiProject.Interfaces;
+﻿using CourseWebApi.Application.Dto;
+using CourseWebApi.Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CourseWebApiProject.Controllers;

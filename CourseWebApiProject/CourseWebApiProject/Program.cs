@@ -1,5 +1,5 @@
+using CourseWebApi.Application.Interfaces;
 using CourseWebApiProject.DataAccess;
-using CourseWebApiProject.Interfaces;
 using CourseWebApiProject.Middleware;
 using CourseWebApiProject.Repository;
 using CourseWebApiProject.Services;

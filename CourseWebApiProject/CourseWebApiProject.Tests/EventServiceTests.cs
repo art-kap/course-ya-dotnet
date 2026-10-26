@@ -1,7 +1,7 @@
-﻿using CourseWebApi.Domain.Exceptions;
+﻿using CourseWebApi.Application.Dto;
+using CourseWebApi.Application.Interfaces;
+using CourseWebApi.Domain.Exceptions;
 using CourseWebApiProject.DataAccess;
-using CourseWebApiProject.Dto;
-using CourseWebApiProject.Interfaces;
 using CourseWebApiProject.Repository;
 using CourseWebApiProject.Services;
 using FluentAssertions;

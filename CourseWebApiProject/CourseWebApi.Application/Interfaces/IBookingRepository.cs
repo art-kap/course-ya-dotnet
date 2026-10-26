@@ -1,6 +1,6 @@
 ﻿using CourseWebApi.Domain.Entities;
 
-namespace CourseWebApiProject.Interfaces;
+namespace CourseWebApi.Application.Interfaces;
 
 public interface IBookingRepository
 {
