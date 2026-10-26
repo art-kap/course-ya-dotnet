@@ -1,6 +1,6 @@
-﻿using CourseWebApiProject.DataAccess;
+﻿using CourseWebApi.Domain.Exceptions;
+using CourseWebApiProject.DataAccess;
 using CourseWebApiProject.Dto;
-using CourseWebApiProject.Exceptions;
 using CourseWebApiProject.Interfaces;
 using CourseWebApiProject.Repository;
 using CourseWebApiProject.Services;

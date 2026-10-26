@@ -1,7 +1,7 @@
-﻿using CourseWebApiProject.DataAccess;
+﻿using CourseWebApi.Domain.Entities;
+using CourseWebApiProject.DataAccess;
 using CourseWebApiProject.Dto;
 using CourseWebApiProject.Mappings;
-using CourseWebApiProject.Models;
 
 namespace CourseWebApiProject.IntegrationTests;
 

@@ -1,6 +1,6 @@
-﻿using CourseWebApiProject.DataAccess;
+﻿using CourseWebApi.Domain.Entities;
+using CourseWebApiProject.DataAccess;
 using CourseWebApiProject.Interfaces;
-using CourseWebApiProject.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace CourseWebApiProject.Repository;

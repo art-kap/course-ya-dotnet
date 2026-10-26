@@ -1,8 +1,8 @@
-﻿using CourseWebApiProject.Dto;
-using CourseWebApiProject.Exceptions;
+﻿using CourseWebApi.Domain.Entities;
+using CourseWebApi.Domain.Exceptions;
+using CourseWebApiProject.Dto;
 using CourseWebApiProject.Interfaces;
 using CourseWebApiProject.Mappings;
-using CourseWebApiProject.Models;
 
 namespace CourseWebApiProject.Services;
 

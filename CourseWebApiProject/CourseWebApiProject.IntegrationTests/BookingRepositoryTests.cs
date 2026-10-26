@@ -1,4 +1,4 @@
-﻿using CourseWebApiProject.Models;
+﻿using CourseWebApi.Domain.Entities;
 using CourseWebApiProject.Repository;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;

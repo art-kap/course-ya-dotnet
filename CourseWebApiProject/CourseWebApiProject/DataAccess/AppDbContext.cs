@@ -1,4 +1,4 @@
-﻿using CourseWebApiProject.Models;
+﻿using CourseWebApi.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace CourseWebApiProject.DataAccess;

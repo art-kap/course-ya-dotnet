@@ -1,4 +1,4 @@
-﻿using CourseWebApiProject.Exceptions;
+﻿using CourseWebApi.Domain.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
 using System.Text.Json;

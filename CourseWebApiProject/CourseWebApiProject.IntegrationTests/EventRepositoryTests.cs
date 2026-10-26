@@ -1,5 +1,5 @@
-﻿using CourseWebApiProject.Mappings;
-using CourseWebApiProject.Models;
+﻿using CourseWebApi.Domain.Entities;
+using CourseWebApiProject.Mappings;
 using CourseWebApiProject.Repository;
 using FluentAssertions;
 using FluentAssertions.Extensions;

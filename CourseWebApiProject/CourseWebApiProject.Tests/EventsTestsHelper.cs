@@ -1,6 +1,6 @@
-﻿using CourseWebApiProject.Dto;
+﻿using CourseWebApi.Domain.Entities;
+using CourseWebApiProject.Dto;
 using CourseWebApiProject.Mappings;
-using CourseWebApiProject.Models;
 
 namespace CourseWebApiProject.Tests;
 
