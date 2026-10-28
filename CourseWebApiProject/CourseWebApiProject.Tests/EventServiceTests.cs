@@ -12,8 +12,7 @@ namespace CourseWebApiProject.Tests;
 
 public class EventServiceTests
 {
-    private readonly IEventService _eventService;
-    private readonly IBookingService _bookingService;
+    private readonly ServiceProvider _serviceProvider;
 
     public EventServiceTests()
     {
@@ -25,12 +24,12 @@ public class EventServiceTests
         services.AddScoped<IEventService, EventService>();
         services.AddScoped<IBookingService, BookingService>();
 
-        var serviceProvider = services.BuildServiceProvider();
-
-        _eventService = serviceProvider.GetRequiredService<IEventService>();
-        _bookingService = serviceProvider.GetRequiredService<IBookingService>();
+        _serviceProvider = services.BuildServiceProvider();
     }
 
+    /// <summary>
+    /// Успешное добавление события
+    /// </summary>
     [Fact]
     public async Task Add_ValidEvent_Success()
     {
@@ -38,13 +37,22 @@ public class EventServiceTests
         var validEvent = EventsTestsHelper.GetValidEventCreate();
 
         // Act
-        var response = await _eventService.AddEvent(validEvent);
+        EventInfo response;
+
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
+            response = await eventService.AddEvent(validEvent);
+        }
 
         // Assert
         response.Should().NotBeNull();
         response.Should().BeEquivalentTo(validEvent);
     }
 
+    /// <summary>
+    /// Неудача при добавлении события с неправильными датами
+    /// </summary>
     [Fact]
     public async Task Add_EventWithInvalidDates_ShouldThrowEventValidationException()
     {
@@ -52,9 +60,15 @@ public class EventServiceTests
         var invalidEvent = EventsTestsHelper.GetEventCreateWithInvalidDates();
 
         // Act & Assert
-        await Assert.ThrowsAsync<EventValidationException>(() => _eventService.AddEvent(invalidEvent));
+        using var scope = _serviceProvider.CreateScope();
+        var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
+
+        await Assert.ThrowsAsync<EventValidationException>(() => eventService.AddEvent(invalidEvent));
     }
 
+    /// <summary>
+    /// Неудача при добавлении события с неправильным количеством мест
+    /// </summary>
     [Fact]
     public async Task Add_EventWithInvalidTotalSeats_ShouldThrowEventValidationException()
     {
@@ -62,128 +76,263 @@ public class EventServiceTests
         var invalidEventCreate = EventsTestsHelper.GetEventCreateWithInvalidTotalSeats();
 
         // Act & Assert
-        await Assert.ThrowsAsync<EventValidationException>(() => _eventService.AddEvent(invalidEventCreate));
+        using var scope = _serviceProvider.CreateScope();
+        var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
+
+        await Assert.ThrowsAsync<EventValidationException>(() => eventService.AddEvent(invalidEventCreate));
     }
 
+    /// <summary>
+    /// Успешное получение события по id
+    /// </summary>
     [Fact]
     public async Task GetEvent_ExistingId_Success()
     {
         // Arrange
         var validEventCreate = EventsTestsHelper.GetValidEventCreate();
-        var eventInfo = await _eventService.AddEvent(validEventCreate);
+        Guid eventId;
+
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
+            var eventInfo = await eventService.AddEvent(validEventCreate);
+            eventId = eventInfo.Id;
+        }
 
         // Act
-        var response = await _eventService.GetEvent(eventInfo.Id);
+        EventInfo response;
+
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
+            response = await eventService.GetEvent(eventId);
+        }
 
         // Assert
         response.Should().NotBeNull();
         response.Should().BeEquivalentTo(validEventCreate);
     }
 
+    /// <summary>
+    /// Неудача при попытке получить событие по несуществущему id
+    /// </summary>
     [Fact]
     public async Task GetEvent_NonExistingId_ShouldThrowEventNotFoundException()
     {
         // Arrange
         var validEvent = EventsTestsHelper.GetValidEventCreate();
-        await _eventService.AddEvent(validEvent);
+
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
+            await eventService.AddEvent(validEvent);
+        }
+
         var nonExistingId = Guid.NewGuid();
 
         // Act & Assert
-        await Assert.ThrowsAsync<EventNotFoundException>(() => _eventService.GetEvent(nonExistingId));
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
+            await Assert.ThrowsAsync<EventNotFoundException>(() => eventService.GetEvent(nonExistingId));
+        }
     }
 
+    /// <summary>
+    /// Успешное обновление события
+    /// </summary>
     [Fact]
     public async Task UpdateEvent_ExistingId_Success()
     {
         // Arrange
         var validEvent = EventsTestsHelper.GetValidEventCreate();
-        var eventInfo = await _eventService.AddEvent(validEvent);
         var eventUpdate = EventsTestsHelper.GetValidEventUpdate();
+        Guid eventId;
+
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
+            var eventInfo = await eventService.AddEvent(validEvent);
+            eventId = eventInfo.Id;
+        }
 
         // Act
-        await _eventService.UpdateEvent(eventInfo.Id, eventUpdate);
-        var response = await _eventService.GetEvent(eventInfo.Id);
+        EventInfo response;
+
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
+            await eventService.UpdateEvent(eventId, eventUpdate);
+            response = await eventService.GetEvent(eventId);
+        }
 
         // Assert
         response.Should().NotBeNull();
         response.Should().BeEquivalentTo(eventUpdate);
     }
 
-
+    /// <summary>
+    /// Неудача при попытке обновить событие по несуществущему id
+    /// </summary>
     [Fact]
     public async Task UpdateEvent_NonExistingId_ShouldThrowEventNotFoundException()
     {
         // Arrange
         var validEvent = EventsTestsHelper.GetValidEventCreate();
-        await _eventService.AddEvent(validEvent);
         var eventUpdate = EventsTestsHelper.GetValidEventUpdate();
+
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
+            await eventService.AddEvent(validEvent);
+        }
+
         var nonExistingId = Guid.NewGuid();
 
         // Act & Assert
-        await Assert.ThrowsAsync<EventNotFoundException>(() => _eventService.UpdateEvent(nonExistingId, eventUpdate));
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
+            await Assert.ThrowsAsync<EventNotFoundException>(() => eventService.UpdateEvent(nonExistingId, eventUpdate));
+        }
     }
 
-
+    /// <summary>
+    /// Неудача при попытке получить событие некорректными данными
+    /// </summary>
     [Fact]
     public async Task UpdateEvent_InvalidDates_ShouldThrowEventValidationException()
     {
         // Arrange
         var validEvent = EventsTestsHelper.GetValidEventCreate();
-        var eventInfo = await _eventService.AddEvent(validEvent);
         var invalidEvent = EventsTestsHelper.GetEventUpdateWithInvalidDates();
+        Guid eventId;
+
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
+            var eventInfo = await eventService.AddEvent(validEvent);
+            eventId = eventInfo.Id;
+        }
 
         // Act & Assert
-        await Assert.ThrowsAsync<EventValidationException>(() => _eventService.UpdateEvent(eventInfo.Id, invalidEvent));
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
+            await Assert.ThrowsAsync<EventValidationException>(() => eventService.UpdateEvent(eventId, invalidEvent));
+        }
     }
 
+    /// <summary>
+    /// Успешное удаление события
+    /// </summary>
     [Fact]
     public async Task RemoveEvent_ExistingId_Success()
     {
         // Arrange
         var validEvent = EventsTestsHelper.GetValidEventCreate();
-        var eventInfo = await _eventService.AddEvent(validEvent);
+        Guid eventId;
+
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
+            var eventInfo = await eventService.AddEvent(validEvent);
+            eventId = eventInfo.Id;
+        }
 
         // Act
-        await _eventService.RemoveEvent(eventInfo.Id);
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
+            await eventService.RemoveEvent(eventId);
+        }
 
         // Assert
-        await Assert.ThrowsAsync<EventNotFoundException>(() => _eventService.GetEvent(eventInfo.Id));
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
+            await Assert.ThrowsAsync<EventNotFoundException>(() => eventService.GetEvent(eventId));
+        }
     }
 
+    /// <summary>
+    /// Неудача при попытке удалить событие по несуществущему id
+    /// </summary>
     [Fact]
     public async Task RemoveEvent_NonExistingId_ShouldThrowEventNotFoundException()
     {
         // Arrange
         var validEvent = EventsTestsHelper.GetValidEventCreate();
-        await _eventService.AddEvent(validEvent);
+
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
+            await eventService.AddEvent(validEvent);
+        }
+
         var nonExistingId = Guid.NewGuid();
 
         // Act & Assert
-        await Assert.ThrowsAsync<EventNotFoundException>(() => _eventService.RemoveEvent(nonExistingId));
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
+            await Assert.ThrowsAsync<EventNotFoundException>(() => eventService.RemoveEvent(nonExistingId));
+        }
     }
 
+    /// <summary>
+    /// Неудача при попытке удалить событие с имеющимися бронированиями
+    /// </summary>
     [Fact]
     public async Task RemoveEvent_HasBookings_ShouldThrowEventHasBookingsException()
     {
         // Arrange
-        var eventCreate = EventsTestsHelper.GetValidEventCreate();
-        var eventInfo = await _eventService.AddEvent(eventCreate);
-        await _bookingService.CreateBookingAsync(eventInfo.Id);
+        var validEvent = EventsTestsHelper.GetValidEventCreate();
+        Guid eventId;
+
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
+            var eventInfo = await eventService.AddEvent(validEvent);
+            eventId = eventInfo.Id;
+
+            var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
+            await bookingService.CreateBookingAsync(eventId);
+        }
 
         // Act & Assert
-        await Assert.ThrowsAsync<EventHasBookingsException>(() => _eventService.RemoveEvent(eventInfo.Id));
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
+            await Assert.ThrowsAsync<EventHasBookingsException>(() => eventService.RemoveEvent(eventId));
+        }
     }
 
+    /// <summary>
+    /// Успешное получение всех событий на одной странице
+    /// </summary>
     [Fact]
     public async Task GetAll_ThreeEventsOnSinglePage_Success()
     {
         // Arrange
         var events = EventsTestsHelper.GetThreeTestEventCreates(DateTime.Now);
-        events.ForEach(async e => await _eventService.AddEvent(e));
+
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
+            events.ForEach(async e => await eventService.AddEvent(e));
+        }
+
         var emptyQuery = new EventsQuery(null, null, null, 1, events.Count);
 
         // Act
-        var paginatedResult = await _eventService.GetEventsByQuery(emptyQuery);
+        PaginatedResult? paginatedResult;
+
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
+            paginatedResult = await eventService.GetEventsByQuery(emptyQuery);
+        }
 
         // Assert
         paginatedResult.Should().NotBeNull();
@@ -192,18 +341,33 @@ public class EventServiceTests
         paginatedResult.CurrentPageSize.Should().Be(events.Count);
     }
 
+    /// <summary>
+    /// Успешное получение событий на двух страницах
+    /// </summary>
     [Fact]
     public async Task GetAll_ThreeEventsOnTwoPages_Success()
     {
         // Arrange
         var events = EventsTestsHelper.GetThreeTestEventCreates(DateTime.Now);
-        events.ForEach(async e => await _eventService.AddEvent(e));
+
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
+            events.ForEach(async e => await eventService.AddEvent(e));
+        }
+
         var firstPageQuery = new EventsQuery(null, null, null, 1, 2);
         var secondPageQuery = new EventsQuery(null, null, null, 2, 2);
 
         // Act
-        var firstPageResult = await _eventService.GetEventsByQuery(firstPageQuery);
-        var secondPageResult = await _eventService.GetEventsByQuery(secondPageQuery);
+        PaginatedResult? firstPageResult, secondPageResult;
+
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
+            firstPageResult = await eventService.GetEventsByQuery(firstPageQuery);
+            secondPageResult = await eventService.GetEventsByQuery(secondPageQuery);
+        }
 
         // Assert
         firstPageResult.Should().NotBeNull();

@@ -30,6 +30,9 @@ public class BookingServiceTests
         _serviceProvider = services.BuildServiceProvider();
     }
 
+    /// <summary>
+    /// Успешное создание бронирования
+    /// </summary>
     [Fact]
     public async Task CreateBooking_ExistingEvent_Success()
     {
@@ -67,6 +70,9 @@ public class BookingServiceTests
         updatedEvent.AvailableSeats.Should().Be(availableSeatsBeforeBooking - 1);
     }
 
+    /// <summary>
+    /// Успешное создание двух бронирований с разными id
+    /// </summary>
     [Fact]
     public async Task Create_TwoBookings_ShouldCreateDifferentIds()
     {
@@ -96,6 +102,9 @@ public class BookingServiceTests
         firstBooking.Id.Should().NotBe(secondBooking.Id);
     }
 
+    /// <summary>
+    /// Успешное создание бронирований до тех пор, пока есть места
+    /// </summary>
     [Fact]
     public async Task CreateBookings_ExistingEvent_SuccessUntilNoSeatsLeft()
     {
@@ -134,6 +143,9 @@ public class BookingServiceTests
         }
     }
 
+    /// <summary>
+    /// Неудача при попытке создать бронирование на несуществующее событие
+    /// </summary>
     [Fact]
     public async Task CreateBooking_NonExistingEvent_ShouldThrowEventNotFoundException()
     {
@@ -156,6 +168,9 @@ public class BookingServiceTests
         }
     }
 
+    /// <summary>
+    /// Неудача при попытке создать бронирование на удаленное событие
+    /// </summary>
     [Fact]
     public async Task CreateBooking_RemovedEvent_ShouldThrowEventNotFoundException()
     {
@@ -181,6 +196,9 @@ public class BookingServiceTests
         }
     }
 
+    /// <summary>
+    /// Неудача при попытке получить бронирование по несуществущему id
+    /// </summary>
     [Fact]
     public async Task Get_NonExistingId_ShouldThrowBookingNotFoundException()
     {
@@ -203,6 +221,9 @@ public class BookingServiceTests
         }
     }
 
+    /// <summary>
+    /// Проверяет обработку бронирования
+    /// </summary>
     [Fact]
     public async Task ProcessBooking_ExistingEvent_ShouldConfirmBooking()
     {
@@ -244,6 +265,9 @@ public class BookingServiceTests
         bookingToConfirm.Status.Should().Be((int)BookingStatus.Confirmed);
     }
 
+    /// <summary>
+    /// Неудача при обработке несуществующего бронирования
+    /// </summary>
     [Fact]
     public async Task ProcessBooking_NonExistingBooking_ShouldThrowBookingNotFoundException()
     {

@@ -10,6 +10,9 @@ namespace CourseWebApiProject.IntegrationTests;
 [Collection("Database collection")]
 public class EventRepositoryTests(PostgreSqlFixture fixture) : BaseRepositoryTests(fixture)
 {
+    /// <summary>
+    /// Проверяет добавление события в БД
+    /// </summary>
     [Fact]
     public async Task Add_Event_SavesEventToDatabase()
     {
@@ -33,6 +36,9 @@ public class EventRepositoryTests(PostgreSqlFixture fixture) : BaseRepositoryTes
         }
     }
 
+    /// <summary>
+    /// Проверяет поиск события по существующему id
+    /// </summary>
     [Fact]
     public async Task FindEvent_ExistingId_EventFound()
     {
@@ -70,6 +76,9 @@ public class EventRepositoryTests(PostgreSqlFixture fixture) : BaseRepositoryTes
         savedEvent.AvailableSeats.Should().Be(availableSeats);
     }
 
+    /// <summary>
+    /// Проверяет поиск события по несуществующему id
+    /// </summary>
     [Fact]
     public async Task Find_NonExistingId_EventNotFound()
     {
@@ -93,6 +102,9 @@ public class EventRepositoryTests(PostgreSqlFixture fixture) : BaseRepositoryTes
         }
     }
 
+    /// <summary>
+    /// Неудача при попытке добавить два события с одинаковыми id
+    /// </summary>
     [Fact]
     public async Task Add_DuplicateEvent_ThrowsDbUpdateException()
     {
@@ -113,6 +125,9 @@ public class EventRepositoryTests(PostgreSqlFixture fixture) : BaseRepositoryTes
         }
     }
 
+    /// <summary>
+    /// Проверяет обновление события в БД
+    /// </summary>
     [Fact]
     public async Task Update_ExistingEvent_SaveChangesToDatabase()
     {
@@ -159,6 +174,9 @@ public class EventRepositoryTests(PostgreSqlFixture fixture) : BaseRepositoryTes
         }
     }
 
+    /// <summary>
+    /// Проверяет удаление существующего события
+    /// </summary>
     [Fact]
     public async Task Remove_ExistingId_ShouldReturnTrue()
     {
@@ -192,6 +210,9 @@ public class EventRepositoryTests(PostgreSqlFixture fixture) : BaseRepositoryTes
         }
     }
 
+    /// <summary>
+    /// Проверяет удаление несуществующего события
+    /// </summary>
     [Fact]
     public async Task Remove_NonExistingId_ShouldReturnFalse()
     {
@@ -218,6 +239,9 @@ public class EventRepositoryTests(PostgreSqlFixture fixture) : BaseRepositoryTes
         okRemoved.Should().BeFalse();
     }
 
+    /// <summary>
+    /// Проверяет удаление события, у которого есть бронирования
+    /// </summary>
     [Fact]
     public async Task Remove_EventWithBooking_ShouldThrowsDbUpdateException()
     {
@@ -246,6 +270,9 @@ public class EventRepositoryTests(PostgreSqlFixture fixture) : BaseRepositoryTes
         }
     }
 
+    /// <summary>
+    /// Проверяет получение всех событий
+    /// </summary>
     [Fact]
     public async Task GetAll_Events_EveryEventExists()
     {
@@ -283,6 +310,9 @@ public class EventRepositoryTests(PostgreSqlFixture fixture) : BaseRepositoryTes
         }
     }
 
+    /// <summary>
+    /// Проверяет получение событий вместе с бронированиями
+    /// </summary>
     [Fact]
     public async Task Load_Include_ReturnsEventWithBookings()
     {
@@ -323,6 +353,9 @@ public class EventRepositoryTests(PostgreSqlFixture fixture) : BaseRepositoryTes
         expectedBookingIds.Should().AllSatisfy(b => b.Should().BeOneOf(loadedBookingIds));
     }
 
+    /// <summary>
+    /// Проверяет фильтрацию событий по названию
+    /// </summary>
     [Theory]
     [InlineData("test event")]
     [InlineData("TeSt evEnT")]
@@ -390,6 +423,9 @@ public class EventRepositoryTests(PostgreSqlFixture fixture) : BaseRepositoryTes
         eventsPage.CurrentPageSize.Should().BeLessThanOrEqualTo(pageSize);
     }
 
+    /// <summary>
+    /// Проверяет фильтрацию событий по дате
+    /// </summary>
     [Fact]
     public async Task FilterByDate_RandomChoiceFromTwoStartDates_ShouldReturnUnchangedEvents()
     {
@@ -455,6 +491,9 @@ public class EventRepositoryTests(PostgreSqlFixture fixture) : BaseRepositoryTes
         eventsPage.CurrentPageSize.Should().BeLessThanOrEqualTo(pageSize);
     }
 
+    /// <summary>
+    /// Проверяет фильтрацию событий по названию и дате
+    /// </summary>
     [Theory]
     [InlineData("test event")]
     [InlineData("TeSt evEnT")]
