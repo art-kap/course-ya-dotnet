@@ -10,6 +10,8 @@ public interface IEventRepository
 
     Task<IReadOnlyCollection<Event>> GetAll(CancellationToken ct = default);
 
+    Task<EventsPage> GetFiltered(EventsFilter eventsFilter, CancellationToken ct = default);
+
     Task<Event?> FindAsync(Guid eventId, CancellationToken ct = default);
 
     Task<bool> ContainsId(Guid eventId, CancellationToken ct = default);

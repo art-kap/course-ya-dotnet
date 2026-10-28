@@ -9,6 +9,10 @@ public abstract class BaseRepositoryTests(PostgreSqlFixture fixture) : IAsyncLif
 {
     private readonly PostgreSqlFixture _fixture = fixture;
 
+    protected string _testEventTitle = "test event";
+    protected string _updatedEventTitle = "updated event";
+    protected DateTime _timeNow = DateTime.Now;
+
     public AppDbContext CreateContext() => _fixture.CreateContext();
 
     public Task InitializeAsync() => Task.CompletedTask;
@@ -17,8 +21,7 @@ public abstract class BaseRepositoryTests(PostgreSqlFixture fixture) : IAsyncLif
 
     protected EventCreate GetTestEventCreate()
     {
-        return new EventCreate("test event", "", DateTime.Now.ToUniversalTime(),
-            DateTime.Now.AddHours(1).ToUniversalTime(), 5);
+        return new EventCreate(_testEventTitle, "", _timeNow.ToUniversalTime(), _timeNow.AddHours(1).ToUniversalTime(), 5);
     }
 
     protected Event GetTestEvent()
@@ -28,7 +31,7 @@ public abstract class BaseRepositoryTests(PostgreSqlFixture fixture) : IAsyncLif
 
     protected EventUpdate GetTestEventUpdate()
     {
-        return new EventUpdate("updated event", "updated description", DateTime.Now.AddYears(-1).ToUniversalTime(),
-            DateTime.Now.AddYears(-1).AddHours(2).ToUniversalTime());
+        return new EventUpdate(_updatedEventTitle, "updated description", _timeNow.AddYears(-1).ToUniversalTime(),
+            _timeNow.AddYears(-1).AddHours(2).ToUniversalTime());
     }
 }

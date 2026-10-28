@@ -29,6 +29,31 @@ public class EventRepository(AppDbContext context) : IEventRepository
         return await _context.Events.ToListAsync(ct);
     }
 
+    public async Task<EventsPage> GetFiltered(EventsFilter eventsFilter, CancellationToken ct = default)
+    {
+        var filteredEvents = _context.Events.AsQueryable();
+
+        if (eventsFilter.Title != null)
+        {
+            filteredEvents = filteredEvents.Where(e => EF.Functions.ILike(e.Title, $"%{eventsFilter.Title}%"));
+        }
+
+        if (eventsFilter.From != null)
+        {
+            filteredEvents = filteredEvents.Where(e => e.StartAt >= eventsFilter.From.Value.ToUniversalTime());
+        }
+
+        if (eventsFilter.To != null)
+        {
+            filteredEvents = filteredEvents.Where(e => e.EndAt <= eventsFilter.To.Value.ToUniversalTime());
+        }
+
+        var eventsCount = await filteredEvents.CountAsync(ct);
+        var currentPageEvents = await filteredEvents.Skip((eventsFilter.Page - 1) * eventsFilter.PageSize).Take(eventsFilter.PageSize).ToListAsync(ct);
+
+        return new EventsPage(eventsCount, currentPageEvents, eventsFilter.Page, currentPageEvents.Count);
+    }
+
     public async Task<bool> RemoveById(Guid eventId, CancellationToken ct = default)
     {
         var @event = await FindAsync(eventId, ct);

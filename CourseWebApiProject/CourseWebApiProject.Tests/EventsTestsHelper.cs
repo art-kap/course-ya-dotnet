@@ -75,9 +75,4 @@ public static class EventsTestsHelper
     {
         return GetValidEventCreate().ToEvent();
     }
-
-    public static Event GetAnotherValidEvent()
-    {
-        return GetAnotherValidEventCreate().ToEvent();
-    }
 }

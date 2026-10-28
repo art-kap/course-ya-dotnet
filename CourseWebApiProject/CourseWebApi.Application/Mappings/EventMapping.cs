@@ -26,4 +26,23 @@ public static class EventMapping
             @event.TotalSeats,
             @event.AvailableSeats);
     }
+
+    public static EventsFilter ToEventsFilter(this EventsQuery eventsQuery)
+    {
+        return new EventsFilter(
+            eventsQuery.Title,
+            eventsQuery.From,
+            eventsQuery.To,
+            eventsQuery.Page,
+            eventsQuery.PageSize);
+    }
+
+    public static PaginatedResult ToPaginatedResult(this EventsPage eventsPage)
+    {
+        return new PaginatedResult(
+            eventsPage.EventsCount,
+            [.. eventsPage.CurrentPageEvents.Select(ToEventInfo)],
+            eventsPage.CurrentPageNumber,
+            eventsPage.CurrentPageSize);
+    }
 }

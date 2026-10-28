@@ -45,28 +45,10 @@ public class EventService(IEventRepository eventStore) : IEventService
 
     public async Task<PaginatedResult> GetEventsByQuery(EventsQuery query)
     {
-        IEnumerable<Event> filteredEvents = await _eventStore.GetAll();
+        var eventsFilter = query.ToEventsFilter();
+        var result = await _eventStore.GetFiltered(eventsFilter);
 
-        if (query.Title != null)
-        {
-            filteredEvents = filteredEvents.Where(e => e.Title.Contains(query.Title, StringComparison.OrdinalIgnoreCase));
-        }
-
-        if (query.From != null)
-        {
-            filteredEvents = filteredEvents.Where(e => e.StartAt >= query.From.Value);
-        }
-
-        if (query.To != null)
-        {
-            filteredEvents = filteredEvents.Where(e => e.EndAt <= query.To.Value);
-        }
-
-        var eventsCount = filteredEvents.Count();
-        var currentPageEvents = filteredEvents.Skip((query.Page - 1) * query.PageSize).Take(query.PageSize);
-        var eventsArray = currentPageEvents.Select(e => e.ToEventInfo()).ToArray();
-
-        return new PaginatedResult(eventsCount, eventsArray, query.Page, eventsArray.Length);
+        return result.ToPaginatedResult();
     }
 
     public async Task<EventInfo> GetEvent(Guid eventId)
