@@ -11,6 +11,7 @@ public class BookingService(IBookingRepository bookingStore, IEventRepository ev
     private readonly IBookingRepository _bookingStore = bookingStore;
     private readonly IEventRepository _eventStore = eventStore;
     private readonly static SemaphoreSlim CreateBookingSemaphore = new(1, 1);
+    private readonly static TimeSpan ProcessingDelay = TimeSpan.FromSeconds(2);
 
     public async Task<BookingInfo> CreateBookingAsync(Guid eventId)
     {
@@ -43,5 +44,25 @@ public class BookingService(IBookingRepository bookingStore, IEventRepository ev
     {
         var bookingToGet = await _bookingStore.FindAsync(bookingId) ?? throw new BookingNotFoundException(bookingId);
         return bookingToGet.ToInfo();
+    }
+
+    public async Task ProcessBookingAsync(Guid bookingId, CancellationToken ct = default)
+    {
+        var booking = await bookingStore.FindAsync(bookingId, ct) ?? throw new BookingNotFoundException(bookingId);
+        var @event = await eventStore.FindAsync(booking.EventId, ct);
+
+        if (@event == null)
+        {
+            booking.Reject();
+            await bookingStore.SaveChangesAsync(ct);
+
+            return;
+        }
+
+        // Имитация обработки бронирования
+        await Task.Delay(ProcessingDelay, ct);
+
+        booking.Confirm();
+        await bookingStore.SaveChangesAsync(ct);
     }
 }

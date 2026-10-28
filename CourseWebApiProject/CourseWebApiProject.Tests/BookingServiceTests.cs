@@ -202,4 +202,70 @@ public class BookingServiceTests
             await Assert.ThrowsAsync<BookingNotFoundException>(() => bookingService.GetBookingByIdAsync(nonExistingId));
         }
     }
+
+    [Fact]
+    public async Task ProcessBooking_ExistingEvent_ShouldConfirmBooking()
+    {
+        // Arrange
+        var validEventDto = EventsTestsHelper.GetValidEventCreate();
+
+        Guid bookingId;
+
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
+            var eventInfo = await eventService.AddEvent(validEventDto);
+
+            var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
+            var booking = await bookingService.CreateBookingAsync(eventInfo.Id);
+            bookingId = booking.Id;
+        }
+
+        var serviceWorktime = TimeSpan.FromSeconds(3);
+
+        // Act
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
+            await bookingService.ProcessBookingAsync(bookingId);
+        }
+
+        await Task.Delay(serviceWorktime);
+
+        BookingInfo bookingToConfirm;
+
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
+            bookingToConfirm = await bookingService.GetBookingByIdAsync(bookingId);
+        }
+
+        // Assert
+        bookingToConfirm.Status.Should().Be((int)BookingStatus.Confirmed);
+    }
+
+    [Fact]
+    public async Task ProcessBooking_NonExistingBooking_ShouldThrowBookingNotFoundException()
+    {
+        // Arrange
+        var validEventDto = EventsTestsHelper.GetValidEventCreate();
+
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
+            var eventInfo = await eventService.AddEvent(validEventDto);
+
+            var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
+            await bookingService.CreateBookingAsync(eventInfo.Id);
+        }
+
+        var nonExistingBookingId = Guid.NewGuid();
+
+        // Act & Assert
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
+            await Assert.ThrowsAsync<BookingNotFoundException>(() => bookingService.ProcessBookingAsync(nonExistingBookingId));
+        }
+    }
 }

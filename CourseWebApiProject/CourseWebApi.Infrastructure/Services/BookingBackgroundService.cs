@@ -1,6 +1,5 @@
 ﻿using CourseWebApi.Application.Interfaces;
 using CourseWebApi.Domain.Entities;
-using CourseWebApi.Domain.Exceptions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -10,7 +9,6 @@ namespace CourseWebApi.Infrastructure.Services;
 public class BookingBackgroundService(IServiceScopeFactory scopeFactory, ILogger<BookingBackgroundService> logger) : BackgroundService
 {
     private static readonly TimeSpan PollingInterval = TimeSpan.FromSeconds(1);
-    private static readonly TimeSpan ProcessingDelay = TimeSpan.FromSeconds(2);
 
     private readonly IServiceScopeFactory _scopeFactory = scopeFactory;
     private readonly ILogger _logger = logger;
@@ -42,46 +40,24 @@ public class BookingBackgroundService(IServiceScopeFactory scopeFactory, ILogger
     {
         stoppingToken.ThrowIfCancellationRequested();
 
-        _logger.LogInformation($"Начато оформление бронирования {bookingId}");
-
-        using var scope = _scopeFactory.CreateScope();
-        var bookingStore = scope.ServiceProvider.GetRequiredService<IBookingRepository>();
-        var eventStore = scope.ServiceProvider.GetRequiredService<IEventRepository>();
-
-        // Имитация обработки бронирования
-        await Task.Delay(ProcessingDelay, stoppingToken);
-
-        var booking = await bookingStore.FindAsync(bookingId, stoppingToken) ?? throw new BookingNotFoundException(bookingId);
-        var @event = await eventStore.FindAsync(booking.EventId, stoppingToken);
-
         try
         {
-            if (@event == null)
-            {
-                booking.Reject();
-                _logger.LogWarning($"Бронирование {booking.Id} отклонено. Не найдено событие {booking.EventId}.");
-            }
-            else
-            {
-                booking.Confirm();
-                _logger.LogInformation($"Бронирование {booking.Id} оформлено.");
-            }
+            _logger.LogInformation($"Начато оформление бронирования {bookingId}");
 
-            await bookingStore.SaveChangesAsync();
+            using var scope = _scopeFactory.CreateScope();
+            var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
+
+            await bookingService.ProcessBookingAsync(bookingId, stoppingToken);
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
         {
             // Штатная остановка, выходим из цикла
-            _logger.LogInformation($"Бронирование {booking.Id} отменено.");
+            _logger.LogInformation($"Бронирование {bookingId} отменено.");
         }
         catch (Exception e)
         {
-            booking.Reject();
-            @event?.ReleaseSeats();
 
-            await bookingStore.SaveChangesAsync();
-
-            _logger.LogError(e, $"Возникла непредвиденная ошибка при оформлении бронирования {booking.Id}.");
+            _logger.LogError(e, $"Возникла непредвиденная ошибка при оформлении бронирования {bookingId}.");
         }
     }
 }
