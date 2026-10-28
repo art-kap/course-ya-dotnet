@@ -1,0 +1,22 @@
+﻿using CourseWebApi.Domain.Entities;
+
+namespace CourseWebApi.Application.Interfaces;
+
+public interface IEventRepository
+{
+    Task Add(Event @event, CancellationToken ct = default);
+
+    Task<bool> RemoveById(Guid eventId, CancellationToken ct = default);
+
+    Task<IReadOnlyCollection<Event>> GetAll(CancellationToken ct = default);
+
+    Task<EventsPage> GetFiltered(EventsFilter eventsFilter, CancellationToken ct = default);
+
+    Task<Event?> FindAsync(Guid eventId, CancellationToken ct = default);
+
+    Task<bool> ContainsId(Guid eventId, CancellationToken ct = default);
+
+    Task SaveChangesAsync(CancellationToken ct = default);
+
+    Task<bool> HasBookings(Guid eventId, CancellationToken ct = default);
+}

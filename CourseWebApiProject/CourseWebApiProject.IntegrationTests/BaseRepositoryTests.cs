@@ -1,13 +1,17 @@
-﻿using CourseWebApiProject.DataAccess;
-using CourseWebApiProject.Dto;
-using CourseWebApiProject.Mappings;
-using CourseWebApiProject.Models;
+﻿using CourseWebApi.Application.Dto;
+using CourseWebApi.Application.Mappings;
+using CourseWebApi.Domain.Entities;
+using CourseWebApi.Infrastructure.Persistence;
 
 namespace CourseWebApiProject.IntegrationTests;
 
 public abstract class BaseRepositoryTests(PostgreSqlFixture fixture) : IAsyncLifetime
 {
     private readonly PostgreSqlFixture _fixture = fixture;
+
+    protected string _testEventTitle = "test event";
+    protected string _updatedEventTitle = "updated event";
+    protected DateTime _timeNow = DateTime.Now;
 
     public AppDbContext CreateContext() => _fixture.CreateContext();
 
@@ -17,8 +21,7 @@ public abstract class BaseRepositoryTests(PostgreSqlFixture fixture) : IAsyncLif
 
     protected EventCreate GetTestEventCreate()
     {
-        return new EventCreate("test event", "", DateTime.Now.ToUniversalTime(),
-            DateTime.Now.AddHours(1).ToUniversalTime(), 5);
+        return new EventCreate(_testEventTitle, "", _timeNow.ToUniversalTime(), _timeNow.AddHours(1).ToUniversalTime(), 5);
     }
 
     protected Event GetTestEvent()
@@ -28,7 +31,7 @@ public abstract class BaseRepositoryTests(PostgreSqlFixture fixture) : IAsyncLif
 
     protected EventUpdate GetTestEventUpdate()
     {
-        return new EventUpdate("updated event", "updated description", DateTime.Now.AddYears(-1).ToUniversalTime(),
-            DateTime.Now.AddYears(-1).AddHours(2).ToUniversalTime());
+        return new EventUpdate(_updatedEventTitle, "updated description", _timeNow.AddYears(-1).ToUniversalTime(),
+            _timeNow.AddYears(-1).AddHours(2).ToUniversalTime());
     }
 }

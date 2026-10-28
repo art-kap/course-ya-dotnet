@@ -1,10 +1,11 @@
-﻿using CourseWebApiProject.DataAccess;
-using CourseWebApiProject.Dto;
-using CourseWebApiProject.Exceptions;
-using CourseWebApiProject.Interfaces;
-using CourseWebApiProject.Models;
-using CourseWebApiProject.Repository;
-using CourseWebApiProject.Services;
+﻿using CourseWebApi.Application.Dto;
+using CourseWebApi.Application.Interfaces;
+using CourseWebApi.Application.Services;
+using CourseWebApi.Domain.Entities;
+using CourseWebApi.Domain.Exceptions;
+using CourseWebApi.Infrastructure.Persistence;
+using CourseWebApi.Infrastructure.Persistence.Repositories;
+using CourseWebApi.Infrastructure.Services;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -34,6 +35,9 @@ public class BookingProcessingTests
         _serviceProvider = services.BuildServiceProvider();
     }
 
+    /// <summary>
+    /// Проверяет работу фонового сервиса
+    /// </summary>
     [Fact]
     public async Task Wait_BackgroundConfirmation_ShouldConfirmBooking()
     {
@@ -85,6 +89,9 @@ public class BookingProcessingTests
         handledBooking.Status.Should().Be((int)BookingStatus.Confirmed);
     }
 
+    /// <summary>
+    /// Проверяет обработку бронирований при овербукинге
+    /// </summary>
     [Fact]
     public async Task ConcurrentBookings_Overbooking_CorrectProcessing()
     {
@@ -136,6 +143,9 @@ public class BookingProcessingTests
         response.AvailableSeats.Should().Be(0);
     }
 
+    /// <summary>
+    /// Проверяет создание бронирований с уникальными id
+    /// </summary>
     [Fact]
     public async Task ConcurrentBookings_BackgroundService_UniqueConfirmedBookings()
     {

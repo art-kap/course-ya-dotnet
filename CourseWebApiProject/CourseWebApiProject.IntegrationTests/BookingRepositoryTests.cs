@@ -1,5 +1,5 @@
-﻿using CourseWebApiProject.Models;
-using CourseWebApiProject.Repository;
+﻿using CourseWebApi.Domain.Entities;
+using CourseWebApi.Infrastructure.Persistence.Repositories;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,6 +8,9 @@ namespace CourseWebApiProject.IntegrationTests;
 [Collection("Database collection")]
 public class BookingRepositoryTests(PostgreSqlFixture fixture) : BaseRepositoryTests(fixture)
 {
+    /// <summary>
+    /// Успешный поиск бронирования по существующему id
+    /// </summary>
     [Fact]
     public async Task FindBooking_ExistingId_BookingFound()
     {
@@ -48,6 +51,9 @@ public class BookingRepositoryTests(PostgreSqlFixture fixture) : BaseRepositoryT
         }
     }
 
+    /// <summary>
+    /// Проверяет пустой результат поиска бронирования по несуществующему id
+    /// </summary>
     [Fact]
     public async Task FindBooking_NonExistingId_BookingNotFound()
     {
@@ -76,6 +82,9 @@ public class BookingRepositoryTests(PostgreSqlFixture fixture) : BaseRepositoryT
         }
     }
 
+    /// <summary>
+    /// Неудача при попытке добавить два бронирования с одинаковыми id
+    /// </summary>
     [Fact]
     public async Task Add_DuplicateBooking_ThrowsDbUpdateException()
     {
@@ -100,6 +109,9 @@ public class BookingRepositoryTests(PostgreSqlFixture fixture) : BaseRepositoryT
         }
     }
 
+    /// <summary>
+    /// Неудача при попытке добавить бронирование для несуществующего события
+    /// </summary>
     [Fact]
     public async Task AddBooking_NonExistingEvent_ThrowsDbUpdateException()
     {
@@ -122,6 +134,9 @@ public class BookingRepositoryTests(PostgreSqlFixture fixture) : BaseRepositoryT
         }
     }
 
+    /// <summary>
+    /// Проверяет получение необработанных бронирований
+    /// </summary>
     [Fact]
     public async Task GetPending_RandomChoiceForPendingBooking_ReturnsPendingBooking()
     {
@@ -170,6 +185,9 @@ public class BookingRepositoryTests(PostgreSqlFixture fixture) : BaseRepositoryT
         pendingBookings.First().Id.Should().Be(pendingBookingId);
     }
 
+    /// <summary>
+    /// Проверяет получение бронирований вместе с событием
+    /// </summary>
     [Fact]
     public async Task Load_Include_ReturnsBookingWithEvent()
     {

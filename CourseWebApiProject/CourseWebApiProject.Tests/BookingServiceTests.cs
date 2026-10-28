@@ -1,10 +1,10 @@
-﻿using CourseWebApiProject.DataAccess;
-using CourseWebApiProject.Dto;
-using CourseWebApiProject.Exceptions;
-using CourseWebApiProject.Interfaces;
-using CourseWebApiProject.Models;
-using CourseWebApiProject.Repository;
-using CourseWebApiProject.Services;
+﻿using CourseWebApi.Application.Dto;
+using CourseWebApi.Application.Interfaces;
+using CourseWebApi.Application.Services;
+using CourseWebApi.Domain.Entities;
+using CourseWebApi.Domain.Exceptions;
+using CourseWebApi.Infrastructure.Persistence;
+using CourseWebApi.Infrastructure.Persistence.Repositories;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -30,6 +30,9 @@ public class BookingServiceTests
         _serviceProvider = services.BuildServiceProvider();
     }
 
+    /// <summary>
+    /// Успешное создание бронирования
+    /// </summary>
     [Fact]
     public async Task CreateBooking_ExistingEvent_Success()
     {
@@ -67,6 +70,9 @@ public class BookingServiceTests
         updatedEvent.AvailableSeats.Should().Be(availableSeatsBeforeBooking - 1);
     }
 
+    /// <summary>
+    /// Успешное создание двух бронирований с разными id
+    /// </summary>
     [Fact]
     public async Task Create_TwoBookings_ShouldCreateDifferentIds()
     {
@@ -96,6 +102,9 @@ public class BookingServiceTests
         firstBooking.Id.Should().NotBe(secondBooking.Id);
     }
 
+    /// <summary>
+    /// Успешное создание бронирований до тех пор, пока есть места
+    /// </summary>
     [Fact]
     public async Task CreateBookings_ExistingEvent_SuccessUntilNoSeatsLeft()
     {
@@ -134,6 +143,9 @@ public class BookingServiceTests
         }
     }
 
+    /// <summary>
+    /// Неудача при попытке создать бронирование на несуществующее событие
+    /// </summary>
     [Fact]
     public async Task CreateBooking_NonExistingEvent_ShouldThrowEventNotFoundException()
     {
@@ -156,6 +168,9 @@ public class BookingServiceTests
         }
     }
 
+    /// <summary>
+    /// Неудача при попытке создать бронирование на удаленное событие
+    /// </summary>
     [Fact]
     public async Task CreateBooking_RemovedEvent_ShouldThrowEventNotFoundException()
     {
@@ -181,6 +196,9 @@ public class BookingServiceTests
         }
     }
 
+    /// <summary>
+    /// Неудача при попытке получить бронирование по несуществущему id
+    /// </summary>
     [Fact]
     public async Task Get_NonExistingId_ShouldThrowBookingNotFoundException()
     {
@@ -200,6 +218,78 @@ public class BookingServiceTests
         {
             var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
             await Assert.ThrowsAsync<BookingNotFoundException>(() => bookingService.GetBookingByIdAsync(nonExistingId));
+        }
+    }
+
+    /// <summary>
+    /// Проверяет обработку бронирования
+    /// </summary>
+    [Fact]
+    public async Task ProcessBooking_ExistingEvent_ShouldConfirmBooking()
+    {
+        // Arrange
+        var validEventDto = EventsTestsHelper.GetValidEventCreate();
+
+        Guid bookingId;
+
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
+            var eventInfo = await eventService.AddEvent(validEventDto);
+
+            var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
+            var booking = await bookingService.CreateBookingAsync(eventInfo.Id);
+            bookingId = booking.Id;
+        }
+
+        var serviceWorktime = TimeSpan.FromSeconds(3);
+
+        // Act
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
+            await bookingService.ProcessBookingAsync(bookingId);
+        }
+
+        await Task.Delay(serviceWorktime);
+
+        BookingInfo bookingToConfirm;
+
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
+            bookingToConfirm = await bookingService.GetBookingByIdAsync(bookingId);
+        }
+
+        // Assert
+        bookingToConfirm.Status.Should().Be((int)BookingStatus.Confirmed);
+    }
+
+    /// <summary>
+    /// Неудача при обработке несуществующего бронирования
+    /// </summary>
+    [Fact]
+    public async Task ProcessBooking_NonExistingBooking_ShouldThrowBookingNotFoundException()
+    {
+        // Arrange
+        var validEventDto = EventsTestsHelper.GetValidEventCreate();
+
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
+            var eventInfo = await eventService.AddEvent(validEventDto);
+
+            var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
+            await bookingService.CreateBookingAsync(eventInfo.Id);
+        }
+
+        var nonExistingBookingId = Guid.NewGuid();
+
+        // Act & Assert
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
+            await Assert.ThrowsAsync<BookingNotFoundException>(() => bookingService.ProcessBookingAsync(nonExistingBookingId));
         }
     }
 }

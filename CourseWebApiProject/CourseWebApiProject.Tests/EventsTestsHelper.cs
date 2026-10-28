@@ -1,6 +1,6 @@
-﻿using CourseWebApiProject.Dto;
-using CourseWebApiProject.Mappings;
-using CourseWebApiProject.Models;
+﻿using CourseWebApi.Application.Dto;
+using CourseWebApi.Application.Mappings;
+using CourseWebApi.Domain.Entities;
 
 namespace CourseWebApiProject.Tests;
 
@@ -74,10 +74,5 @@ public static class EventsTestsHelper
     public static Event GetValidEvent()
     {
         return GetValidEventCreate().ToEvent();
-    }
-
-    public static Event GetAnotherValidEvent()
-    {
-        return GetAnotherValidEventCreate().ToEvent();
     }
 }

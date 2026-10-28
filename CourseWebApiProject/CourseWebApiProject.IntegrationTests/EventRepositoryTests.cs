@@ -1,6 +1,6 @@
-﻿using CourseWebApiProject.Mappings;
-using CourseWebApiProject.Models;
-using CourseWebApiProject.Repository;
+﻿using CourseWebApi.Application.Mappings;
+using CourseWebApi.Domain.Entities;
+using CourseWebApi.Infrastructure.Persistence.Repositories;
 using FluentAssertions;
 using FluentAssertions.Extensions;
 using Microsoft.EntityFrameworkCore;
@@ -10,6 +10,9 @@ namespace CourseWebApiProject.IntegrationTests;
 [Collection("Database collection")]
 public class EventRepositoryTests(PostgreSqlFixture fixture) : BaseRepositoryTests(fixture)
 {
+    /// <summary>
+    /// Проверяет добавление события в БД
+    /// </summary>
     [Fact]
     public async Task Add_Event_SavesEventToDatabase()
     {
@@ -33,6 +36,9 @@ public class EventRepositoryTests(PostgreSqlFixture fixture) : BaseRepositoryTes
         }
     }
 
+    /// <summary>
+    /// Проверяет поиск события по существующему id
+    /// </summary>
     [Fact]
     public async Task FindEvent_ExistingId_EventFound()
     {
@@ -70,6 +76,9 @@ public class EventRepositoryTests(PostgreSqlFixture fixture) : BaseRepositoryTes
         savedEvent.AvailableSeats.Should().Be(availableSeats);
     }
 
+    /// <summary>
+    /// Проверяет поиск события по несуществующему id
+    /// </summary>
     [Fact]
     public async Task Find_NonExistingId_EventNotFound()
     {
@@ -93,6 +102,9 @@ public class EventRepositoryTests(PostgreSqlFixture fixture) : BaseRepositoryTes
         }
     }
 
+    /// <summary>
+    /// Неудача при попытке добавить два события с одинаковыми id
+    /// </summary>
     [Fact]
     public async Task Add_DuplicateEvent_ThrowsDbUpdateException()
     {
@@ -113,6 +125,9 @@ public class EventRepositoryTests(PostgreSqlFixture fixture) : BaseRepositoryTes
         }
     }
 
+    /// <summary>
+    /// Проверяет обновление события в БД
+    /// </summary>
     [Fact]
     public async Task Update_ExistingEvent_SaveChangesToDatabase()
     {
@@ -159,6 +174,9 @@ public class EventRepositoryTests(PostgreSqlFixture fixture) : BaseRepositoryTes
         }
     }
 
+    /// <summary>
+    /// Проверяет удаление существующего события
+    /// </summary>
     [Fact]
     public async Task Remove_ExistingId_ShouldReturnTrue()
     {
@@ -192,6 +210,9 @@ public class EventRepositoryTests(PostgreSqlFixture fixture) : BaseRepositoryTes
         }
     }
 
+    /// <summary>
+    /// Проверяет удаление несуществующего события
+    /// </summary>
     [Fact]
     public async Task Remove_NonExistingId_ShouldReturnFalse()
     {
@@ -218,6 +239,9 @@ public class EventRepositoryTests(PostgreSqlFixture fixture) : BaseRepositoryTes
         okRemoved.Should().BeFalse();
     }
 
+    /// <summary>
+    /// Проверяет удаление события, у которого есть бронирования
+    /// </summary>
     [Fact]
     public async Task Remove_EventWithBooking_ShouldThrowsDbUpdateException()
     {
@@ -246,6 +270,9 @@ public class EventRepositoryTests(PostgreSqlFixture fixture) : BaseRepositoryTes
         }
     }
 
+    /// <summary>
+    /// Проверяет получение всех событий
+    /// </summary>
     [Fact]
     public async Task GetAll_Events_EveryEventExists()
     {
@@ -283,6 +310,9 @@ public class EventRepositoryTests(PostgreSqlFixture fixture) : BaseRepositoryTes
         }
     }
 
+    /// <summary>
+    /// Проверяет получение событий вместе с бронированиями
+    /// </summary>
     [Fact]
     public async Task Load_Include_ReturnsEventWithBookings()
     {
@@ -322,4 +352,222 @@ public class EventRepositoryTests(PostgreSqlFixture fixture) : BaseRepositoryTes
         loadedEvent.Bookings.Should().NotBeNull();
         expectedBookingIds.Should().AllSatisfy(b => b.Should().BeOneOf(loadedBookingIds));
     }
+
+    /// <summary>
+    /// Проверяет фильтрацию событий по названию
+    /// </summary>
+    [Theory]
+    [InlineData("test event")]
+    [InlineData("TeSt evEnT")]
+    [InlineData("TEsT")]
+    [InlineData("EST eve")]
+    [InlineData("st evenT")]
+    public async Task FilterByTitle_RandomChoiceFromTwoTitles_ShouldReturnUnchangedEvents(string title)
+    {
+        // Arrange
+        int totalEventsCount = 20;
+        int maxPageSize = 5;
+        int maxPageNumber = 5;
+
+        var pageSize = new Random().Next(1, maxPageSize);
+        var pageNumber = new Random().Next(1, maxPageNumber);
+
+        await using (var context = CreateContext())
+        {
+            var eventRepository = new EventRepository(context);
+
+            foreach (var _ in Enumerable.Range(0, totalEventsCount))
+            {
+                var @event = GetTestEvent();
+                await eventRepository.Add(@event);
+            }
+        }
+
+        var updateEventsCount = new Random().Next(totalEventsCount);
+
+        await using (var context = CreateContext())
+        {
+            var eventRepository = new EventRepository(context);
+            var allEvents = await eventRepository.GetAll();
+            var eventUpdate = GetTestEventUpdate();
+
+            int counter = 0;
+
+            foreach (var @event in allEvents)
+            {
+                if (counter == updateEventsCount)
+                {
+                    break;
+                }
+
+                @event.Update(eventUpdate.Title, eventUpdate.Description, eventUpdate.StartAt!.Value, eventUpdate.EndAt!.Value);
+                counter++;
+            }
+
+            await eventRepository.SaveChangesAsync();
+        }
+
+        // Act
+        EventsPage? eventsPage;
+
+        await using (var context = CreateContext())
+        {
+            var eventRepository = new EventRepository(context);
+            eventsPage = await eventRepository.GetFiltered(new EventsFilter(title, null, null, pageNumber, pageSize));
+        }
+
+        // Assert
+        eventsPage.Should().NotBeNull();
+        eventsPage.EventsCount.Should().Be(totalEventsCount - updateEventsCount);
+        eventsPage.CurrentPageNumber.Should().Be(pageNumber);
+        eventsPage.CurrentPageSize.Should().BeLessThanOrEqualTo(pageSize);
+    }
+
+    /// <summary>
+    /// Проверяет фильтрацию событий по дате
+    /// </summary>
+    [Fact]
+    public async Task FilterByDate_RandomChoiceFromTwoStartDates_ShouldReturnUnchangedEvents()
+    {
+        // Arrange
+        int totalEventsCount = 20;
+        int maxPageSize = 5;
+        int maxPageNumber = 5;
+
+        var pageSize = new Random().Next(1, maxPageSize);
+        var pageNumber = new Random().Next(1, maxPageNumber);
+
+        var startAt = new DateTime(_timeNow.Year, 1, 1).ToUniversalTime();
+        var endAt = startAt.AddYears(1).ToUniversalTime();
+
+        await using (var context = CreateContext())
+        {
+            var eventRepository = new EventRepository(context);
+
+            foreach (var _ in Enumerable.Range(0, totalEventsCount))
+            {
+                var @event = GetTestEvent();
+                await eventRepository.Add(@event);
+            }
+        }
+
+        var updateEventsCount = new Random().Next(totalEventsCount);
+
+        await using (var context = CreateContext())
+        {
+            var eventRepository = new EventRepository(context);
+            var allEvents = await eventRepository.GetAll();
+            var eventUpdate = GetTestEventUpdate();
+
+            int counter = 0;
+
+            foreach (var @event in allEvents)
+            {
+                if (counter == updateEventsCount)
+                {
+                    break;
+                }
+
+                @event.Update(eventUpdate.Title, eventUpdate.Description, eventUpdate.StartAt!.Value, eventUpdate.EndAt!.Value);
+                counter++;
+            }
+
+            await eventRepository.SaveChangesAsync();
+        }
+
+        // Act
+        EventsPage? eventsPage;
+
+        await using (var context = CreateContext())
+        {
+            var eventRepository = new EventRepository(context);
+            eventsPage = await eventRepository.GetFiltered(new EventsFilter(null, startAt, endAt, pageNumber, pageSize));
+        }
+
+        // Assert
+        eventsPage.Should().NotBeNull();
+        eventsPage.EventsCount.Should().Be(totalEventsCount - updateEventsCount);
+        eventsPage.CurrentPageNumber.Should().Be(pageNumber);
+        eventsPage.CurrentPageSize.Should().BeLessThanOrEqualTo(pageSize);
+    }
+
+    /// <summary>
+    /// Проверяет фильтрацию событий по названию и дате
+    /// </summary>
+    [Theory]
+    [InlineData("test event")]
+    [InlineData("TeSt evEnT")]
+    [InlineData("TEsT")]
+    [InlineData("EST eve")]
+    [InlineData("st evenT")]
+    public async Task FilterByTitleAndDates_RandomChoice_ShouldReturnUnchangedEvents(string title)
+    {
+        // Arrange
+        int totalEventsCount = 20;
+        int maxPageSize = 5;
+        int maxPageNumber = 5;
+        var changeProbabilityThreshold = 0.5;
+
+        var pageSize = new Random().Next(1, maxPageSize);
+        var pageNumber = new Random().Next(1, maxPageNumber);
+
+        var startAt = new DateTime(_timeNow.Year, 1, 1).ToUniversalTime();
+        var endAt = startAt.AddYears(1).ToUniversalTime();
+
+        await using (var context = CreateContext())
+        {
+            var eventRepository = new EventRepository(context);
+
+            foreach (var _ in Enumerable.Range(0, totalEventsCount))
+            {
+                var @event = GetTestEvent();
+                await eventRepository.Add(@event);
+            }
+        }
+
+        var updateEventsCount = 0;
+
+        await using (var context = CreateContext())
+        {
+            var eventRepository = new EventRepository(context);
+            var allEvents = await eventRepository.GetAll();
+            var eventUpdate = GetTestEventUpdate();
+
+            foreach (var @event in allEvents)
+            {
+                // обновляем или только название, или только даты, или всё вместе
+                var needUpdateTitle = new Random().NextDouble() < changeProbabilityThreshold;
+                var needUpdateDates = new Random().NextDouble() < changeProbabilityThreshold;
+
+                var newTitle = needUpdateTitle ? eventUpdate.Title : @event.Title;
+                var newStartAt = needUpdateDates ? eventUpdate.StartAt!.Value : @event.StartAt;
+                var newEndAt = needUpdateDates ? eventUpdate.EndAt!.Value : @event.EndAt;
+
+                @event.Update(newTitle, eventUpdate.Description, newStartAt, newEndAt);
+
+                if (needUpdateTitle || needUpdateDates)
+                {
+                    updateEventsCount++;
+                }
+            }
+
+            await eventRepository.SaveChangesAsync();
+        }
+
+        // Act
+        EventsPage? eventsPage;
+
+        await using (var context = CreateContext())
+        {
+            var eventRepository = new EventRepository(context);
+            eventsPage = await eventRepository.GetFiltered(new EventsFilter(title, startAt, endAt, pageNumber, pageSize));
+        }
+
+        // Assert
+        eventsPage.Should().NotBeNull();
+        eventsPage.EventsCount.Should().Be(totalEventsCount - updateEventsCount);
+        eventsPage.CurrentPageNumber.Should().Be(pageNumber);
+        eventsPage.CurrentPageSize.Should().BeLessThanOrEqualTo(pageSize);
+    }
+
 }

@@ -1,5 +1,5 @@
-﻿using CourseWebApiProject.Dto;
-using CourseWebApiProject.Interfaces;
+﻿using CourseWebApi.Application.Dto;
+using CourseWebApi.Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CourseWebApiProject.Controllers;
@@ -82,6 +82,7 @@ public class EventsController(IEventService _eventService, IBookingService _book
     [HttpDelete("{id:Guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     [Produces("application/json")]
     public async Task<IActionResult> Delete([FromRoute] Guid id)
     {

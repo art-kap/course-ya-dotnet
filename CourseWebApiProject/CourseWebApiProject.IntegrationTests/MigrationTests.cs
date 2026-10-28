@@ -6,6 +6,9 @@ namespace CourseWebApiProject.IntegrationTests;
 [Collection("Database collection")]
 public class MigrationTests(PostgreSqlFixture fixture) : BaseRepositoryTests(fixture)
 {
+    /// <summary>
+    /// Проверяет создание таблиц events и bookings
+    /// </summary>
     [Fact]
     public async Task ApplyMigrations_ShouldCreateDatabaseAndTablesWithoutErrors()
     {
