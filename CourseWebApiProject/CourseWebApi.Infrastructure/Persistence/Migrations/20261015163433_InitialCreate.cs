@@ -2,7 +2,7 @@
 
 #nullable disable
 
-namespace CourseWebApiProject.Migrations
+namespace CourseWebApi.Infrastructure.Persistence.Migrations
 {
     /// <inheritdoc />
     public partial class InitialCreate : Migration

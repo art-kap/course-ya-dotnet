@@ -1,9 +1,9 @@
-using CourseWebApiProject.DataAccess;
 using CourseWebApiProject.Middleware;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection;
 using CourseWebApi.Application;
 using CourseWebApi.Infrastructure;
+using CourseWebApi.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 

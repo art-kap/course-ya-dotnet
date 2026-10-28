@@ -1,7 +1,7 @@
 ﻿using CourseWebApi.Application.Interfaces;
+using CourseWebApi.Infrastructure.Persistence;
 using CourseWebApi.Infrastructure.Persistence.Repositories;
-using CourseWebApiProject.DataAccess;
-using CourseWebApiProject.Services;
+using CourseWebApi.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

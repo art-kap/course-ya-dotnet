@@ -1,6 +1,5 @@
 ﻿using CourseWebApi.Application.Interfaces;
 using CourseWebApi.Domain.Entities;
-using CourseWebApiProject.DataAccess;
 using Microsoft.EntityFrameworkCore;
 
 namespace CourseWebApi.Infrastructure.Persistence.Repositories;

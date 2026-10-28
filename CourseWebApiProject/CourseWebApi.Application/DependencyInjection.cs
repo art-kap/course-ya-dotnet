@@ -1,5 +1,5 @@
 ﻿using CourseWebApi.Application.Interfaces;
-using CourseWebApiProject.Services;
+using CourseWebApi.Application.Services;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace CourseWebApi.Application;

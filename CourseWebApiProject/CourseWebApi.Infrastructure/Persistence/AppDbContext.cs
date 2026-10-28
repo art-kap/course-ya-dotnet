@@ -1,7 +1,7 @@
 ﻿using CourseWebApi.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace CourseWebApiProject.DataAccess;
+namespace CourseWebApi.Infrastructure.Persistence;
 
 public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {

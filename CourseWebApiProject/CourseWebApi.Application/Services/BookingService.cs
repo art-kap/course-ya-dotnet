@@ -4,7 +4,7 @@ using CourseWebApi.Application.Mappings;
 using CourseWebApi.Domain.Entities;
 using CourseWebApi.Domain.Exceptions;
 
-namespace CourseWebApiProject.Services;
+namespace CourseWebApi.Application.Services;
 
 public class BookingService(IBookingRepository bookingStore, IEventRepository eventStore) : IBookingService
 {
