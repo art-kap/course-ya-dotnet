@@ -1,9 +1,8 @@
 using CourseWebApiProject.Middleware;
-using Microsoft.EntityFrameworkCore;
 using System.Reflection;
 using CourseWebApi.Application;
 using CourseWebApi.Infrastructure;
-using CourseWebApi.Infrastructure.Persistence;
+using CourseWebApi.Infrastructure.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,11 +24,7 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    db.Database.Migrate();
-}
+app.Services.InitDatabase();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
