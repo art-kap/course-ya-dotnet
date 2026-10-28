@@ -1,4 +1,6 @@
-﻿namespace CourseWebApi.Domain.Entities;
+﻿using CourseWebApi.Domain.Exceptions;
+
+namespace CourseWebApi.Domain.Entities;
 
 public class Event
 {
@@ -64,7 +66,7 @@ public class Event
     {
         if (startAt >= endAt)
         {
-            throw new ArgumentException("Точное время окончания должно быть позже времени начала.");
+            throw new EventValidationException("Точное время окончания должно быть позже времени начала.");
         }
     }
 
@@ -72,7 +74,7 @@ public class Event
     {
         if (totalSeats <= 0)
         {
-            throw new ArgumentException("Количество мест должно быть больше нуля.");
+            throw new EventValidationException("Количество мест должно быть больше нуля.");
         }
     }
 }

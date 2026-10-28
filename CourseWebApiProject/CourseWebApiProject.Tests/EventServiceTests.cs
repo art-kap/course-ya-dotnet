@@ -13,6 +13,7 @@ namespace CourseWebApiProject.Tests;
 public class EventServiceTests
 {
     private readonly IEventService _eventService;
+    private readonly IBookingService _bookingService;
 
     public EventServiceTests()
     {
@@ -20,11 +21,14 @@ public class EventServiceTests
         var services = new ServiceCollection();
         services.AddDbContext<AppDbContext>(options => options.UseInMemoryDatabase(dbName));
         services.AddScoped<IEventRepository, EventRepository>();
+        services.AddScoped<IBookingRepository, BookingRepository>();
         services.AddScoped<IEventService, EventService>();
+        services.AddScoped<IBookingService, BookingService>();
 
         var serviceProvider = services.BuildServiceProvider();
 
         _eventService = serviceProvider.GetRequiredService<IEventService>();
+        _bookingService = serviceProvider.GetRequiredService<IBookingService>();
     }
 
     [Fact]
@@ -42,23 +46,23 @@ public class EventServiceTests
     }
 
     [Fact]
-    public async Task Add_EventWithInvalidDates_ShouldThrowArgumentException()
+    public async Task Add_EventWithInvalidDates_ShouldThrowEventValidationException()
     {
         // Arrange
         var invalidEvent = EventsTestsHelper.GetEventCreateWithInvalidDates();
 
         // Act & Assert
-        await Assert.ThrowsAsync<ArgumentException>(() => _eventService.AddEvent(invalidEvent));
+        await Assert.ThrowsAsync<EventValidationException>(() => _eventService.AddEvent(invalidEvent));
     }
 
     [Fact]
-    public async Task Add_EventWithInvalidTotalSeats_ShouldThrowArgumentException()
+    public async Task Add_EventWithInvalidTotalSeats_ShouldThrowEventValidationException()
     {
         // Arrange
         var invalidEventCreate = EventsTestsHelper.GetEventCreateWithInvalidTotalSeats();
 
         // Act & Assert
-        await Assert.ThrowsAsync<ArgumentException>(() => _eventService.AddEvent(invalidEventCreate));
+        await Assert.ThrowsAsync<EventValidationException>(() => _eventService.AddEvent(invalidEventCreate));
     }
 
     [Fact]
@@ -121,7 +125,7 @@ public class EventServiceTests
 
 
     [Fact]
-    public async Task UpdateEvent_InvalidDates_ShouldThrowArgumentException()
+    public async Task UpdateEvent_InvalidDates_ShouldThrowEventValidationException()
     {
         // Arrange
         var validEvent = EventsTestsHelper.GetValidEventCreate();
@@ -129,7 +133,7 @@ public class EventServiceTests
         var invalidEvent = EventsTestsHelper.GetEventUpdateWithInvalidDates();
 
         // Act & Assert
-        await Assert.ThrowsAsync<ArgumentException>(() => _eventService.UpdateEvent(eventInfo.Id, invalidEvent));
+        await Assert.ThrowsAsync<EventValidationException>(() => _eventService.UpdateEvent(eventInfo.Id, invalidEvent));
     }
 
     [Fact]
@@ -156,6 +160,18 @@ public class EventServiceTests
 
         // Act & Assert
         await Assert.ThrowsAsync<EventNotFoundException>(() => _eventService.RemoveEvent(nonExistingId));
+    }
+
+    [Fact]
+    public async Task RemoveEvent_HasBookings_ShouldThrowEventHasBookingsException()
+    {
+        // Arrange
+        var eventCreate = EventsTestsHelper.GetValidEventCreate();
+        var eventInfo = await _eventService.AddEvent(eventCreate);
+        await _bookingService.CreateBookingAsync(eventInfo.Id);
+
+        // Act & Assert
+        await Assert.ThrowsAsync<EventHasBookingsException>(() => _eventService.RemoveEvent(eventInfo.Id));
     }
 
     [Fact]

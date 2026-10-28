@@ -15,4 +15,6 @@ public interface IEventRepository
     Task<bool> ContainsId(Guid eventId, CancellationToken ct = default);
 
     Task SaveChangesAsync(CancellationToken ct = default);
+
+    Task<bool> HasBookings(Guid eventId, CancellationToken ct = default);
 }

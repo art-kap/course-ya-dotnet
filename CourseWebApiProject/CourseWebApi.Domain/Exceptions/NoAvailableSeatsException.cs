@@ -1,3 +1,3 @@
 ﻿namespace CourseWebApi.Domain.Exceptions;
 
-public class NoAvailableSeatsException() : Exception("No available seats for this event.");
+public class NoAvailableSeatsException() : Exception("Для данного события нет доступных мест.");

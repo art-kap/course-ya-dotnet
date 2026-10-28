@@ -28,6 +28,13 @@ public class EventService(IEventRepository eventStore) : IEventService
 
     public async Task RemoveEvent(Guid eventId)
     {
+        var hasBookings = await _eventStore.HasBookings(eventId);
+
+        if (hasBookings)
+        {
+            throw new EventHasBookingsException(eventId);
+        }
+
         var okRemoved = await _eventStore.RemoveById(eventId);
 
         if (!okRemoved)

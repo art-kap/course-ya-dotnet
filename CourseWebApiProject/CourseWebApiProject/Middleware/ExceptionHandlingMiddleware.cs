@@ -1,7 +1,9 @@
 ﻿using CourseWebApi.Domain.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
+using System.Text.Encodings.Web;
 using System.Text.Json;
+using System.Text.Unicode;
 
 namespace CourseWebApiProject.Middleware;
 
@@ -38,9 +40,16 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
                 _logger.LogWarning(exception, message);
                 break;
 
-            case ArgumentException:
+            case EventValidationException:
                 statusCode = HttpStatusCode.BadRequest;
                 title = "Недопустимые данные.";
+                message = exception.Message;
+                _logger.LogWarning(exception, message);
+                break;
+
+            case EventHasBookingsException:
+                statusCode = HttpStatusCode.Conflict;
+                title = "Отказано в удалении события.";
                 message = exception.Message;
                 _logger.LogWarning(exception, message);
                 break;
@@ -70,7 +79,12 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
             Detail = message
         };
 
-        var jsonResponse = JsonSerializer.Serialize(response);
+        var options = new JsonSerializerOptions
+        {
+            Encoder = JavaScriptEncoder.Create(UnicodeRanges.All)
+        };
+
+        var jsonResponse = JsonSerializer.Serialize(response, options);
         return context.Response.WriteAsync(jsonResponse);
     }
 }

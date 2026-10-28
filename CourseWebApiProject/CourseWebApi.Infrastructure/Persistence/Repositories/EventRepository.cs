@@ -47,4 +47,9 @@ public class EventRepository(AppDbContext context) : IEventRepository
     {
         await _context.SaveChangesAsync(ct);
     }
+
+    public async Task<bool> HasBookings(Guid eventId, CancellationToken ct = default)
+    {
+        return _context.Bookings.Any(b => b.EventId == eventId);
+    }
 }

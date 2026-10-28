@@ -82,6 +82,7 @@ public class EventsController(IEventService _eventService, IBookingService _book
     [HttpDelete("{id:Guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     [Produces("application/json")]
     public async Task<IActionResult> Delete([FromRoute] Guid id)
     {
