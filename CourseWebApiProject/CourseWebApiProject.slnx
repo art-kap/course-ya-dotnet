@@ -1,4 +1,7 @@
 <Solution>
+  <Project Path="CourseWebApi.Application/CourseWebApi.Application.csproj" Id="e8597bae-9149-4151-808e-adc44a8231ae" />
+  <Project Path="CourseWebApi.Domain/CourseWebApi.Domain.csproj" Id="98f5e9a7-ff31-4d69-9256-039e4a8ad13e" />
+  <Project Path="CourseWebApi.Infrastructure/CourseWebApi.Infrastructure.csproj" Id="3c2ab5d8-753f-4aba-8cea-86b5d8db54a7" />
   <Project Path="CourseWebApiProject.IntegrationTests/CourseWebApiProject.IntegrationTests.csproj" Id="3028ac06-2d81-4f0a-8190-c81a4db806ec" />
   <Project Path="CourseWebApiProject.Tests/CourseWebApiProject.Tests.csproj" Id="aead8ddd-7d3d-4787-a3c0-b0f5f0a1da1e" />
   <Project Path="CourseWebApiProject/CourseWebApiProject.csproj" />

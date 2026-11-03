@@ -1,10 +1,13 @@
-﻿using CourseWebApiProject.Models;
+﻿using CourseWebApi.Domain.Entities;
 using FluentAssertions;
 
 namespace CourseWebApiProject.Tests;
 
 public class BookingTests
 {
+    /// <summary>
+    /// Проверяет заполнение полей в созданном бронировании
+    /// </summary>
     [Fact]
     public async Task Create_Booking_NotNullProperties()
     {
@@ -22,6 +25,9 @@ public class BookingTests
         booking.Status.Should().Be(BookingStatus.Pending);
     }
 
+    /// <summary>
+    /// Проверяет изменение статуса бронирования на Confirm
+    /// </summary>
     [Fact]
     public async Task Confirm_Booking_ShouldBeConfirmed()
     {
@@ -41,6 +47,9 @@ public class BookingTests
         booking.Status.Should().Be(BookingStatus.Confirmed);
     }
 
+    /// <summary>
+    /// Проверяет изменение статуса бронирования на Reject
+    /// </summary>
     [Fact]
     public async Task Reject_Booking_ShouldBeRejected()
     {

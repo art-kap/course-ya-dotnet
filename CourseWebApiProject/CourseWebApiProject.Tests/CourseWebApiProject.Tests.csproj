@@ -20,7 +20,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CourseWebApiProject\CourseWebApiProject.csproj" />
+    <ProjectReference Include="..\CourseWebApi.Application\CourseWebApi.Application.csproj" />
+    <ProjectReference Include="..\CourseWebApi.Infrastructure\CourseWebApi.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>

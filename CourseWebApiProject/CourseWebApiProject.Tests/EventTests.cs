@@ -4,6 +4,9 @@ namespace CourseWebApiProject.Tests;
 
 public class EventTests
 {
+    /// <summary>
+    /// Проверяет обновление события
+    /// </summary>
     [Fact]
     public async Task Update_Event_UpdatedProperties()
     {
@@ -26,6 +29,9 @@ public class EventTests
         @event.EndAt.Should().Be(newEndAt);
     }
 
+    /// <summary>
+    /// Проверяет обновление полей при попытке забронировать место
+    /// </summary>
     [Fact]
     public async Task TryReserveSeats_Event_Success()
     {
@@ -42,6 +48,9 @@ public class EventTests
         @event.AvailableSeats.Should().Be(initialAvailableSeats - seatsToReserve);
     }
 
+    /// <summary>
+    /// Пытается забронировать место до тех пор, пока есть места
+    /// </summary>
     [Fact]
     public async Task TryReserveSeats_Event_SuccessUntilNoSeatsAvailable()
     {
@@ -58,6 +67,9 @@ public class EventTests
         secondTry.Should().BeFalse();
     }
 
+    /// <summary>
+    /// Проверяет обновление полей при освобождении места
+    /// </summary>
     [Fact]
     public async Task Release_Event_IncreasesAvailableSeats()
     {

@@ -1,4 +1,4 @@
-﻿using CourseWebApiProject.DataAccess;
+﻿using CourseWebApi.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Testcontainers.PostgreSql;
 
