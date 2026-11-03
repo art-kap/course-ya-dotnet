@@ -46,23 +46,25 @@ public class BookingService(IBookingRepository bookingStore, IEventRepository ev
         return bookingToGet.ToInfo();
     }
 
-    public async Task ProcessBookingAsync(Guid bookingId, CancellationToken ct = default)
+    public async Task TryConfirmBookingAsync(Guid bookingId, CancellationToken ct = default)
     {
         var booking = await bookingStore.FindAsync(bookingId, ct) ?? throw new BookingNotFoundException(bookingId);
-        var @event = await eventStore.FindAsync(booking.EventId, ct);
-
-        if (@event == null)
-        {
-            booking.Reject();
-            await bookingStore.SaveChangesAsync(ct);
-
-            return;
-        }
+        var @event = await eventStore.FindAsync(booking.EventId, ct) ?? throw new EventNotFoundException(booking.EventId);
 
         // Имитация обработки бронирования
         await Task.Delay(ProcessingDelay, ct);
 
         booking.Confirm();
+        await bookingStore.SaveChangesAsync(ct);
+    }
+
+    public async Task RejectBookingAsync(Guid bookingId, CancellationToken ct = default)
+    {
+        var booking = await bookingStore.FindAsync(bookingId, ct) ?? throw new BookingNotFoundException(bookingId);
+        var @event = await eventStore.FindAsync(booking.EventId, ct) ?? throw new EventNotFoundException(booking.EventId);
+
+        booking.Reject();
+        @event.ReleaseSeats();
         await bookingStore.SaveChangesAsync(ct);
     }
 }

@@ -281,34 +281,6 @@ public class EventServiceTests
     }
 
     /// <summary>
-    /// Неудача при попытке удалить событие с имеющимися бронированиями
-    /// </summary>
-    [Fact]
-    public async Task RemoveEvent_HasBookings_ShouldThrowEventHasBookingsException()
-    {
-        // Arrange
-        var validEvent = EventsTestsHelper.GetValidEventCreate();
-        Guid eventId;
-
-        using (var scope = _serviceProvider.CreateScope())
-        {
-            var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
-            var eventInfo = await eventService.AddEvent(validEvent);
-            eventId = eventInfo.Id;
-
-            var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
-            await bookingService.CreateBookingAsync(eventId);
-        }
-
-        // Act & Assert
-        using (var scope = _serviceProvider.CreateScope())
-        {
-            var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
-            await Assert.ThrowsAsync<EventHasBookingsException>(() => eventService.RemoveEvent(eventId));
-        }
-    }
-
-    /// <summary>
     /// Успешное получение всех событий на одной странице
     /// </summary>
     [Fact]

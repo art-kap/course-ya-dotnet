@@ -40,14 +40,14 @@ public class BookingBackgroundService(IServiceScopeFactory scopeFactory, ILogger
     {
         stoppingToken.ThrowIfCancellationRequested();
 
+        using var scope = _scopeFactory.CreateScope();
+        var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
+
         try
         {
             _logger.LogInformation($"Начато оформление бронирования {bookingId}");
 
-            using var scope = _scopeFactory.CreateScope();
-            var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
-
-            await bookingService.ProcessBookingAsync(bookingId, stoppingToken);
+            await bookingService.TryConfirmBookingAsync(bookingId, stoppingToken);
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
         {
@@ -56,6 +56,7 @@ public class BookingBackgroundService(IServiceScopeFactory scopeFactory, ILogger
         }
         catch (Exception e)
         {
+            await bookingService.RejectBookingAsync(bookingId, stoppingToken);
 
             _logger.LogError(e, $"Возникла непредвиденная ошибка при оформлении бронирования {bookingId}.");
         }

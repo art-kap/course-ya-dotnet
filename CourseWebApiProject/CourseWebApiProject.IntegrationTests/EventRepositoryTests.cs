@@ -1,5 +1,6 @@
 ﻿using CourseWebApi.Application.Mappings;
 using CourseWebApi.Domain.Entities;
+using CourseWebApi.Domain.Exceptions;
 using CourseWebApi.Infrastructure.Persistence.Repositories;
 using FluentAssertions;
 using FluentAssertions.Extensions;
@@ -266,7 +267,7 @@ public class EventRepositoryTests(PostgreSqlFixture fixture) : BaseRepositoryTes
         await using (var context = CreateContext())
         {
             var eventRepository = new EventRepository(context);
-            await Assert.ThrowsAsync<DbUpdateException>(() => eventRepository.RemoveById(eventId));
+            await Assert.ThrowsAsync<EventHasBookingsException>(() => eventRepository.RemoveById(eventId));
         }
     }
 

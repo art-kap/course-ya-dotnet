@@ -242,16 +242,12 @@ public class BookingServiceTests
             bookingId = booking.Id;
         }
 
-        var serviceWorktime = TimeSpan.FromSeconds(3);
-
         // Act
         using (var scope = _serviceProvider.CreateScope())
         {
             var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
-            await bookingService.ProcessBookingAsync(bookingId);
+            await bookingService.TryConfirmBookingAsync(bookingId);
         }
-
-        await Task.Delay(serviceWorktime);
 
         BookingInfo bookingToConfirm;
 
@@ -269,7 +265,7 @@ public class BookingServiceTests
     /// Неудача при обработке несуществующего бронирования
     /// </summary>
     [Fact]
-    public async Task ProcessBooking_NonExistingBooking_ShouldThrowBookingNotFoundException()
+    public async Task Confirm_NonExistingBooking_ShouldThrowBookingNotFoundException()
     {
         // Arrange
         var validEventDto = EventsTestsHelper.GetValidEventCreate();
@@ -289,7 +285,50 @@ public class BookingServiceTests
         using (var scope = _serviceProvider.CreateScope())
         {
             var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
-            await Assert.ThrowsAsync<BookingNotFoundException>(() => bookingService.ProcessBookingAsync(nonExistingBookingId));
+            await Assert.ThrowsAsync<BookingNotFoundException>(() => bookingService.TryConfirmBookingAsync(nonExistingBookingId));
         }
+    }
+
+    /// <summary>
+    /// Проверка отклонения брони и откат количества доступных мест
+    /// </summary>
+    [Fact]
+    public async Task ConfirmAndReject_Booking_ShouldReleaseSeats()
+    {
+        // Arrange
+        var validEventDto = EventsTestsHelper.GetValidEventCreate();
+
+        Guid bookingId, eventId;
+        int availableSeatsBeforeBooking;
+
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
+            var eventInfo = await eventService.AddEvent(validEventDto);
+            availableSeatsBeforeBooking = eventInfo.AvailableSeats;
+            eventId = eventInfo.Id;
+
+            var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
+            var booking = await bookingService.CreateBookingAsync(eventId);
+            bookingId = booking.Id;
+
+            await bookingService.TryConfirmBookingAsync(bookingId);
+        }
+
+        // Act
+        int availableSeatsAfterReject;
+
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
+            await bookingService.RejectBookingAsync(bookingId);
+
+            var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
+            var eventInfo = await eventService.GetEvent(eventId);
+            availableSeatsAfterReject = eventInfo.AvailableSeats;
+        }
+
+        // Assert
+        availableSeatsAfterReject.Should().Be(availableSeatsBeforeBooking);
     }
 }

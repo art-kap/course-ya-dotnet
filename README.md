@@ -392,7 +392,7 @@ http://localhost:5109/bookings/1e2cf46a-dae6-4ab6-9302-9d9d9160e01c
 {
   "title": "Отказано в бронировании.",
   "status": 409,
-  "detail": "No available seats for this event."
+  "detail": "Для данного события нет доступных мест."
 }
 ```
 ## Использование примитивов синхронизации

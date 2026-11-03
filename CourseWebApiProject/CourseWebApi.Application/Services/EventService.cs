@@ -1,7 +1,6 @@
 ﻿using CourseWebApi.Application.Dto;
 using CourseWebApi.Application.Interfaces;
 using CourseWebApi.Application.Mappings;
-using CourseWebApi.Domain.Entities;
 using CourseWebApi.Domain.Exceptions;
 
 namespace CourseWebApi.Application.Services;
@@ -28,13 +27,6 @@ public class EventService(IEventRepository eventStore) : IEventService
 
     public async Task RemoveEvent(Guid eventId)
     {
-        var hasBookings = await _eventStore.HasBookings(eventId);
-
-        if (hasBookings)
-        {
-            throw new EventHasBookingsException(eventId);
-        }
-
         var okRemoved = await _eventStore.RemoveById(eventId);
 
         if (!okRemoved)

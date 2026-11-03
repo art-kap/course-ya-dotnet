@@ -21,12 +21,12 @@ public class BookingRepository(AppDbContext context) : IBookingRepository
 
     public async Task<IReadOnlyCollection<Booking>> GetAll(CancellationToken ct = default)
     {
-        return await _context.Bookings.ToListAsync();
+        return await _context.Bookings.ToListAsync(ct);
     }
 
     public async Task<IReadOnlyCollection<Booking>> GetPending(CancellationToken ct = default)
     {
-        return await _context.Bookings.Where(b => b.Status == BookingStatus.Pending).ToListAsync();
+        return await _context.Bookings.Where(b => b.Status == BookingStatus.Pending).ToListAsync(ct);
     }
 
     public async Task SaveChangesAsync(CancellationToken ct = default)

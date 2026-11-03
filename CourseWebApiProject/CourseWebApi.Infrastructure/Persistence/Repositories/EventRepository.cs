@@ -1,5 +1,6 @@
 ﻿using CourseWebApi.Application.Interfaces;
 using CourseWebApi.Domain.Entities;
+using CourseWebApi.Domain.Exceptions;
 using Microsoft.EntityFrameworkCore;
 
 namespace CourseWebApi.Infrastructure.Persistence.Repositories;
@@ -35,7 +36,8 @@ public class EventRepository(AppDbContext context) : IEventRepository
 
         if (eventsFilter.Title != null)
         {
-            filteredEvents = filteredEvents.Where(e => EF.Functions.ILike(e.Title, $"%{eventsFilter.Title}%"));
+            var pattern = EscapeLikePattern(eventsFilter.Title);
+            filteredEvents = filteredEvents.Where(e => EF.Functions.ILike(e.Title, $"%{pattern}%"));
         }
 
         if (eventsFilter.From != null)
@@ -63,9 +65,23 @@ public class EventRepository(AppDbContext context) : IEventRepository
             return false;
         }
 
-        _context.Events.Remove(@event);
-        await _context.SaveChangesAsync(ct);
-        return true;
+        try
+        {
+            _context.Events.Remove(@event);
+            await _context.SaveChangesAsync(ct);
+
+            return true;
+        }
+        catch (DbUpdateException ex)
+        {
+            if (IsForeignKeyViolation(ex))
+            {
+                throw new EventHasBookingsException(eventId);
+            }
+
+            // Если ошибка другая (например, дубликат ключа или что-то еще) - пробрасываем дальше
+            throw;
+        }
     }
 
     public async Task SaveChangesAsync(CancellationToken ct = default)
@@ -73,8 +89,32 @@ public class EventRepository(AppDbContext context) : IEventRepository
         await _context.SaveChangesAsync(ct);
     }
 
-    public async Task<bool> HasBookings(Guid eventId, CancellationToken ct = default)
+    private bool IsForeignKeyViolation(DbUpdateException ex)
     {
-        return _context.Bookings.Any(b => b.EventId == eventId);
+        var inner = ex.InnerException;
+
+        if (inner == null) 
+        {
+            return false;
+        } 
+
+        var message = inner.Message.ToLower();
+
+        return message.Contains("foreign key") ||
+               message.Contains("reference constraint") ||
+               message.Contains("violates foreign key");
+    }
+
+    private string EscapeLikePattern(string pattern)
+    {
+        if (string.IsNullOrEmpty(pattern))
+        {
+            return pattern;
+        }
+
+        return pattern
+            .Replace(@"\", @"\\")
+            .Replace("%", @"\%")
+            .Replace("_", @"\_");
     }
 }
