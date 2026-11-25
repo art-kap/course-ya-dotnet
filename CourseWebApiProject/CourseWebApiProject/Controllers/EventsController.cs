@@ -1,12 +1,15 @@
 ﻿using CourseWebApi.Application.Dto;
 using CourseWebApi.Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace CourseWebApiProject.Controllers;
 
 /// <summary>
 /// Контроллер для обработки HTTP-запросов
 /// </summary>
+[Authorize]
 [ApiController]
 [Route("events")]
 public class EventsController(IEventService _eventService, IBookingService _bookingService) : ControllerBase
@@ -95,16 +98,25 @@ public class EventsController(IEventService _eventService, IBookingService _book
     /// </summary>
     /// <param name="id">id события</param>
     /// <response code="202">Возвращается в случае успешного создания брони</response>
+    /// <response code="400">Возвращается, если событие уже началось</response>
     /// <response code="404">Возвращается, если если нет события с данным id</response>
     /// <response code="409">Возвращается, если отказано в бронировании</response>
     [HttpPost("{id:Guid}/book")]
     [ProducesResponseType(typeof(BookingInfo), StatusCodes.Status202Accepted)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     [Produces("application/json")]
     public async Task<ActionResult<BookingInfo>> Post([FromRoute] Guid id)
     {
-        var bookingInfo = await _bookingService.CreateBookingAsync(id);
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+
+        if (userIdClaim == null)
+        {
+            return BadRequest("Идентификатор пользователя не найден");
+        }
+
+        var bookingInfo = await _bookingService.CreateBookingAsync(id, Guid.Parse(userIdClaim.Value));
         var resourceUrl = Url.Action(nameof(BookingsController.GetById), "Bookings", new { id = bookingInfo.Id });
         Response.Headers.Location = resourceUrl;
 

@@ -17,12 +17,13 @@ public class Booking
     public Guid UserId { get; private set; }
     public User User { get; private set; } = null!;
 
-    public static Booking Create(Guid eventId)
+    public static Booking Create(Guid eventId, Guid userId)
     {
         return new Booking
         {
             Id = Guid.NewGuid(),
             EventId = eventId,
+            UserId = userId,
             Status = BookingStatus.Pending,
             CreatedAt = DateTime.Now.ToUniversalTime(),
         };

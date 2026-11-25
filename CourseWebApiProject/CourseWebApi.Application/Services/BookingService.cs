@@ -6,14 +6,17 @@ using CourseWebApi.Domain.Exceptions;
 
 namespace CourseWebApi.Application.Services;
 
-public class BookingService(IBookingRepository bookingStore, IEventRepository eventStore) : IBookingService
+public class BookingService(IBookingRepository bookingStore, IEventRepository eventStore,
+    IUserRepository userStore) : IBookingService
 {
     private readonly IBookingRepository _bookingStore = bookingStore;
     private readonly IEventRepository _eventStore = eventStore;
+    private readonly IUserRepository _userStore = userStore;
     private readonly static SemaphoreSlim CreateBookingSemaphore = new(1, 1);
     private readonly static TimeSpan ProcessingDelay = TimeSpan.FromSeconds(2);
+    private readonly static int PendingBookingsUserLimit = 10;
 
-    public async Task<BookingInfo> CreateBookingAsync(Guid eventId)
+    public async Task<BookingInfo> CreateBookingAsync(Guid eventId, Guid userId)
     {
         Booking bookingToAdd;
 
@@ -21,7 +24,20 @@ public class BookingService(IBookingRepository bookingStore, IEventRepository ev
 
         try
         {
+            var bookingsCount = await _bookingStore.CountPendingByUser(userId);
+
+            if (bookingsCount >= PendingBookingsUserLimit)
+            {
+                throw new PendingBookingsLimitException(userId);
+            }
+
             var @event = await _eventStore.FindAsync(eventId) ?? throw new EventNotFoundException(eventId);
+
+            if (DateTime.Now.ToUniversalTime() > @event.StartAt)
+            {
+                throw new PastEventBookingException(@event.Id);
+            }
+
             var canReserve = @event.TryReserveSeats();
 
             if (!canReserve)
@@ -29,7 +45,7 @@ public class BookingService(IBookingRepository bookingStore, IEventRepository ev
                 throw new NoAvailableSeatsException();
             }
 
-            bookingToAdd = Booking.Create(eventId);
+            bookingToAdd = Booking.Create(eventId, userId);
             await _bookingStore.Add(bookingToAdd);
         }
         finally
@@ -66,5 +82,18 @@ public class BookingService(IBookingRepository bookingStore, IEventRepository ev
         booking.Reject();
         @event.ReleaseSeats();
         await bookingStore.SaveChangesAsync(ct);
+    }
+
+    public async Task CancelBooking(Guid bookingId, Guid userId)
+    {
+        var booking = await _bookingStore.FindAsync(bookingId) ?? throw new BookingNotFoundException(bookingId);
+        var user = await _userStore.FindById(userId) ?? throw new UserNotFoundException(userId);
+
+        if (booking.UserId != userId && user.Role != UserRole.Admin)
+        {
+            throw new AccessDeniedException(userId);
+        }
+
+        booking.Cancel();
     }
 }

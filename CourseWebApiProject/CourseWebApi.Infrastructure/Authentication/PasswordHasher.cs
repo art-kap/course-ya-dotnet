@@ -1,9 +1,10 @@
-﻿using System.Security.Cryptography;
+﻿using CourseWebApi.Application.Interfaces;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace CourseWebApi.Infrastructure.Authentication;
 
-public class PasswordHasher
+public class PasswordHasher : IPasswordHasher
 {
     public string Hash(string password)
     {

@@ -1,4 +1,5 @@
 ﻿using CourseWebApi.Application.Interfaces;
+using CourseWebApi.Infrastructure.Authentication;
 using CourseWebApi.Infrastructure.Persistence;
 using CourseWebApi.Infrastructure.Persistence.Repositories;
 using CourseWebApi.Infrastructure.Services;
@@ -19,6 +20,10 @@ public static class DependencyInjection
 
         services.AddScoped<IEventRepository, EventRepository>();
         services.AddScoped<IBookingRepository, BookingRepository>();
+        services.AddScoped<IUserRepository, UserRepository>();
         services.AddHostedService<BookingBackgroundService>();
+
+        services.AddScoped<IPasswordHasher, PasswordHasher>();
+        services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
     }
 }

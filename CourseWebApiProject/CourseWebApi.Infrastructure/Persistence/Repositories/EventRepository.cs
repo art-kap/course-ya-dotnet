@@ -93,10 +93,10 @@ public class EventRepository(AppDbContext context) : IEventRepository
     {
         var inner = ex.InnerException;
 
-        if (inner == null) 
+        if (inner == null)
         {
             return false;
-        } 
+        }
 
         var message = inner.Message.ToLower();
 

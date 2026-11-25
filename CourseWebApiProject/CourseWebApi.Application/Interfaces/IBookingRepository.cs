@@ -13,4 +13,6 @@ public interface IBookingRepository
     Task<IReadOnlyCollection<Booking>> GetPending(CancellationToken ct = default);
 
     Task SaveChangesAsync(CancellationToken ct = default);
+
+    Task<int> CountPendingByUser(Guid userId, CancellationToken ct = default);
 }

@@ -1,4 +1,5 @@
-﻿using CourseWebApi.Domain.Entities;
+﻿using CourseWebApi.Application.Interfaces;
+using CourseWebApi.Domain.Entities;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
@@ -7,9 +8,9 @@ using System.Text;
 
 namespace CourseWebApi.Infrastructure.Authentication;
 
-public class JwtTokenGenerator
+public class JwtTokenGenerator(IConfiguration configuration) : IJwtTokenGenerator
 {
-    public string GenerateToken(User user, IConfiguration configuration)
+    public string GenerateToken(User user)
     {
         var claims = new List<Claim>
         {

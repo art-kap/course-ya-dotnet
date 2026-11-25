@@ -18,6 +18,9 @@ public class BookingConfiguration : IEntityTypeConfiguration<Booking>
         builder.Property(b => b.EventId)
             .IsRequired();
 
+        builder.Property(b => b.UserId)
+            .IsRequired();
+
         builder.Property(e => e.CreatedAt)
             .HasColumnType("timestamp with time zone")
             .IsRequired();
@@ -35,5 +38,9 @@ public class BookingConfiguration : IEntityTypeConfiguration<Booking>
         builder.HasOne(b => b.Event)
             .WithMany(e => e.Bookings)
             .HasForeignKey(b => b.EventId);
+
+        builder.HasOne(b => b.User)
+            .WithMany()
+            .HasForeignKey(b => b.UserId);
     }
 }

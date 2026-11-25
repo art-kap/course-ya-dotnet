@@ -47,6 +47,20 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
                 _logger.LogWarning(exception, message);
                 break;
 
+            case PastEventBookingException:
+                statusCode = HttpStatusCode.BadRequest;
+                title = "Событие уже началось.";
+                message = exception.Message;
+                _logger.LogWarning(exception, message);
+                break;
+
+            case AccessDeniedException:
+                statusCode = HttpStatusCode.Forbidden;
+                title = "Недостаточно прав.";
+                message = exception.Message;
+                _logger.LogWarning(exception, message);
+                break;
+
             case EventHasBookingsException:
                 statusCode = HttpStatusCode.Conflict;
                 title = "Отказано в удалении события.";
@@ -55,6 +69,13 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
                 break;
 
             case NoAvailableSeatsException:
+                statusCode = HttpStatusCode.Conflict;
+                title = "Отказано в бронировании.";
+                message = exception.Message;
+                _logger.LogWarning(exception, message);
+                break;
+
+            case PendingBookingsLimitException:
                 statusCode = HttpStatusCode.Conflict;
                 title = "Отказано в бронировании.";
                 message = exception.Message;
