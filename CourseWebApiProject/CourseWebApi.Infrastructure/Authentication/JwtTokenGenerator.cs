@@ -19,7 +19,7 @@ public class JwtTokenGenerator(IConfiguration configuration) : IJwtTokenGenerato
             new(ClaimTypes.Role, user.Role.ToString())
         };
 
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JwtSettings:SecretKey"]!));
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JwtSettings:Secret"]!));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
         var minutesToExpired = int.Parse(configuration["JwtSettings:ExpirationInMinutes"]!);
 

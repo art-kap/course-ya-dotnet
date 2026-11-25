@@ -95,5 +95,6 @@ public class BookingService(IBookingRepository bookingStore, IEventRepository ev
         }
 
         booking.Cancel();
+        await bookingStore.SaveChangesAsync();
     }
 }
