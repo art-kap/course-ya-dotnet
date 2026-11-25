@@ -47,6 +47,7 @@ public class EventsController(IEventService _eventService, IBookingService _book
     /// <param name="eventCreate">Данные события</param>
     /// <response code="201">Возвращается в случае успешного создания события</response>
     /// <response code="400">Возвращается, если входные данные некорректны</response>
+    [Authorize(Roles = "Admin")]
     [HttpPost]
     [ProducesResponseType(typeof(EventInfo), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -65,6 +66,7 @@ public class EventsController(IEventService _eventService, IBookingService _book
     /// <response code="204">Возвращается в случае успешного обновления события</response>
     /// <response code="400">Возвращается, если входные данные некорректны</response>
     /// <response code="404">Возвращается, если нет события с данным id</response>
+    [Authorize(Roles = "Admin")]
     [HttpPut("{id:Guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -82,6 +84,7 @@ public class EventsController(IEventService _eventService, IBookingService _book
     /// <param name="id">id события</param>
     /// <response code="204">Возвращается в случае успешного удаления</response>
     /// <response code="404">Возвращается, если нет события с данным id</response>
+    [Authorize(Roles = "Admin")]
     [HttpDelete("{id:Guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -100,7 +103,7 @@ public class EventsController(IEventService _eventService, IBookingService _book
     /// <response code="202">Возвращается в случае успешного создания брони</response>
     /// <response code="400">Возвращается, если событие уже началось</response>
     /// <response code="404">Возвращается, если если нет события с данным id</response>
-    /// <response code="409">Возвращается, если отказано в бронировании</response>
+    /// <response code="409">Возвращается, если достигнут лимит активных бронирований</response>
     [HttpPost("{id:Guid}/book")]
     [ProducesResponseType(typeof(BookingInfo), StatusCodes.Status202Accepted)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

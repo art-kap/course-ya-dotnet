@@ -1,6 +1,5 @@
 ﻿using CourseWebApi.Application.Dto;
 using CourseWebApi.Application.Interfaces;
-using CourseWebApi.Application.Mappings;
 using CourseWebApi.Domain.Entities;
 using System.Security.Authentication;
 
@@ -13,12 +12,10 @@ public class UserService(IUserRepository userStore, IPasswordHasher passwordHash
     private readonly IPasswordHasher _passwordHasher = passwordHasher;
     private readonly IJwtTokenGenerator _jwtTokenGenerator = jwtTokenGenerator;
 
-    public async Task<UserInfo> AddUser(UserCreate userCreate)
+    public async Task AddUser(UserCreate userCreate)
     {
         var newUser = User.Create(userCreate.Login, _passwordHasher.Hash(userCreate.Password), userCreate.Role);
         await _userStore.Add(newUser);
-
-        return newUser.ToInfo();
     }
 
     public async Task<string> Login(LoginRequest loginRequest)

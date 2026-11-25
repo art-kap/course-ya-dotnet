@@ -1,6 +1,7 @@
 ﻿using CourseWebApi.Domain.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
+using System.Security.Authentication;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Unicode;
@@ -50,6 +51,13 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
             case PastEventBookingException:
                 statusCode = HttpStatusCode.BadRequest;
                 title = "Событие уже началось.";
+                message = exception.Message;
+                _logger.LogWarning(exception, message);
+                break;
+
+            case AuthenticationException:
+                statusCode = HttpStatusCode.Unauthorized;
+                title = "Ошибка аутентификации.";
                 message = exception.Message;
                 _logger.LogWarning(exception, message);
                 break;
