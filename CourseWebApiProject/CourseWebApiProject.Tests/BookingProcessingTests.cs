@@ -26,11 +26,19 @@ public class BookingProcessingTests
 
         var services = new ServiceCollection();
         services.AddDbContext<AppDbContext>(options => options.UseInMemoryDatabase(dbName));
-        services.AddSingleton(new Mock<ILogger<BookingBackgroundService>>().Object);
+        services.AddSingleton(Mock.Of<ILogger<BookingBackgroundService>>());
+
         services.AddScoped<IEventRepository, EventRepository>();
         services.AddScoped<IBookingRepository, BookingRepository>();
+        services.AddScoped<IUserRepository, UserRepository>();
+
         services.AddScoped<IEventService, EventService>();
         services.AddScoped<IBookingService, BookingService>();
+        services.AddScoped<IUserService, UserService>();
+
+        services.AddScoped(_ => Mock.Of<IPasswordHasher>(p => p.Hash(It.IsAny<string>()) == string.Empty));
+        services.AddScoped(_ => Mock.Of<IJwtTokenGenerator>());
+
         services.AddHostedService<BookingBackgroundService>();
         _serviceProvider = services.BuildServiceProvider();
     }
@@ -49,17 +57,21 @@ public class BookingProcessingTests
         }
 
         var validEventDto = EventsTestsHelper.GetValidEventCreate();
+        var userDto = EventsTestsHelper.GetTestUserCreate();
 
         BookingInfo booking;
         EventInfo eventInfo;
 
         using (var scope = _serviceProvider.CreateScope())
         {
+            var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
+            var userInfo = await userService.AddUser(userDto);
+
             var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
             var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
 
             eventInfo = await eventService.AddEvent(validEventDto);
-            booking = await bookingService.CreateBookingAsync(eventInfo.Id);
+            booking = await bookingService.CreateBookingAsync(eventInfo.Id, userInfo.Id);
         }
 
         var bookingId = booking.Id;
@@ -99,16 +111,20 @@ public class BookingProcessingTests
         const int totalSeats = 5;
         const int concurrentBookings = 20;
         var validEventDto = EventsTestsHelper.GetValidEventCreate(totalSeats);
+        var userDto = EventsTestsHelper.GetTestUserCreate();
 
-        EventInfo eventInfo;
+        Guid eventId, userId;
 
         using (var scope = _serviceProvider.CreateScope())
         {
-            var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
-            eventInfo = await eventService.AddEvent(validEventDto);
-        }
+            var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
+            var userInfo = await userService.AddUser(userDto);
+            userId = userInfo.Id;
 
-        var eventId = eventInfo.Id;
+            var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
+            var eventInfo = await eventService.AddEvent(validEventDto);
+            eventId = eventInfo.Id;
+        }
 
         // Act
         var tasks = Enumerable.Range(0, concurrentBookings)
@@ -119,11 +135,15 @@ public class BookingProcessingTests
                     using var scope = _serviceProvider.CreateScope();
                     var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
 
-                    await bookingService.CreateBookingAsync(eventId);
+                    await bookingService.CreateBookingAsync(eventId, userId);
 
                     return true;
                 }
                 catch (NoAvailableSeatsException)
+                {
+                    return false;
+                }
+                catch (PendingBookingsLimitException)
                 {
                     return false;
                 }
@@ -153,16 +173,20 @@ public class BookingProcessingTests
         const int totalSeats = 10;
         const int concurrentBookings = totalSeats;
         var validEventDto = EventsTestsHelper.GetValidEventCreate(totalSeats);
+        var userDto = EventsTestsHelper.GetTestUserCreate();
 
-        EventInfo eventInfoBeforeBooking;
+        Guid eventId, userId;
 
         using (var scope = _serviceProvider.CreateScope())
         {
-            var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
-            eventInfoBeforeBooking = await eventService.AddEvent(validEventDto);
-        }
+            var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
+            var userInfo = await userService.AddUser(userDto);
+            userId = userInfo.Id;
 
-        var eventId = eventInfoBeforeBooking.Id;
+            var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
+            var eventInfoBeforeBooking = await eventService.AddEvent(validEventDto);
+            eventId = eventInfoBeforeBooking.Id;
+        }
 
         var successedBookingIdBag = new ConcurrentBag<Guid>();
 
@@ -174,7 +198,7 @@ public class BookingProcessingTests
                {
                    using var scope = _serviceProvider.CreateScope();
                    var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
-                   var response = await bookingService.CreateBookingAsync(eventId);
+                   var response = await bookingService.CreateBookingAsync(eventId, userId);
                    successedBookingIdBag.Add(response.Id);
                    return true;
                }
@@ -197,5 +221,122 @@ public class BookingProcessingTests
         // Assert
         successedBookingIdBag.Distinct().Count().Should().Be(concurrentBookings);
         eventInfoAfterBooking.AvailableSeats.Should().Be(0);
+    }
+
+    /// <summary>
+    /// Проверяет лимит пользователя на кол-во активных бронирований
+    /// </summary>
+    [Fact]
+    public async Task ConcurrentBookings_SingleUser_ShouldLimitPendingBookings()
+    {
+        // Arrange
+        const int totalSeats = 30;
+        const int concurrentBookings = 25;
+        const int pendingBookingsLimit = 10;
+        var validEventDto = EventsTestsHelper.GetValidEventCreate(totalSeats);
+        var userDto = EventsTestsHelper.GetTestUserCreate();
+
+        Guid eventId, userId;
+
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
+            var userInfo = await userService.AddUser(userDto);
+            userId = userInfo.Id;
+
+            var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
+            var eventInfo = await eventService.AddEvent(validEventDto);
+            eventId = eventInfo.Id;
+        }
+
+        // Act
+        var tasks = Enumerable.Range(0, concurrentBookings)
+            .Select(async _ =>
+            {
+                try
+                {
+                    using var scope = _serviceProvider.CreateScope();
+                    var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
+
+                    await bookingService.CreateBookingAsync(eventId, userId);
+
+                    return true;
+                }
+                catch (PendingBookingsLimitException)
+                {
+                    return false;
+                }
+            }).ToArray();
+
+        var results = await Task.WhenAll(tasks);
+
+        // Assert
+        results.Count(r => r).Should().Be(pendingBookingsLimit);
+    }
+
+    /// <summary>
+    /// Проверяет независимость лимитов на кол-во активных бронирований для разных пользователей
+    /// </summary>
+    [Fact]
+    public async Task ConcurrentBookings_MultipleUsers_ShouldLimitPendingBookingsIndependently()
+    {
+        // Arrange
+        const int concurrentBookings = 15;
+        const int pendingBookingsLimit = 10;
+        const int usersCount = 5;
+        const int totalSeats = usersCount * pendingBookingsLimit;
+
+        var validEventDto = EventsTestsHelper.GetValidEventCreate(totalSeats);
+        Guid eventId;
+
+        var userIdBag = new ConcurrentBag<Guid>();
+
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
+
+            for (int i = 0; i < usersCount; i++)
+            {
+                var userDto = EventsTestsHelper.GetTestUserCreate();
+                var userInfo = await userService.AddUser(userDto);
+                userIdBag.Add(userInfo.Id);
+            }
+
+            var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
+            var eventInfo = await eventService.AddEvent(validEventDto);
+            eventId = eventInfo.Id;
+        }
+
+        // Act
+        var tasks = Enumerable.Range(0, usersCount * concurrentBookings)
+            .Select(async taskId =>
+            {
+                try
+                {
+                    using var scope = _serviceProvider.CreateScope();
+                    var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
+
+                    await bookingService.CreateBookingAsync(eventId, userIdBag.ElementAt(taskId % usersCount));
+
+                    return true;
+                }
+                catch (PendingBookingsLimitException)
+                {
+                    return false;
+                }
+            }).ToArray();
+
+        var results = await Task.WhenAll(tasks);
+
+        EventInfo response;
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
+            response = await eventService.GetEvent(eventId);
+        }
+
+        // Assert
+        results.Count(r => r).Should().Be(usersCount * pendingBookingsLimit);
+        response.AvailableSeats.Should().Be(0);
     }
 }

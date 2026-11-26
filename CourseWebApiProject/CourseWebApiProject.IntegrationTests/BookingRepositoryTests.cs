@@ -21,10 +21,14 @@ public class BookingRepositoryTests(PostgreSqlFixture fixture) : BaseRepositoryT
 
         await using (var context = CreateContext())
         {
+            var user = GetTestUser();
+            var userRepository = new UserRepository(context);
+            await userRepository.Add(user);
+
             var @event = GetTestEvent();
             eventId = @event.Id;
 
-            booking = Booking.Create(eventId);
+            booking = Booking.Create(eventId, user.Id);
             bookingId = booking.Id;
 
             var eventRepository = new EventRepository(context);
@@ -58,16 +62,20 @@ public class BookingRepositoryTests(PostgreSqlFixture fixture) : BaseRepositoryT
     public async Task FindBooking_NonExistingId_BookingNotFound()
     {
         // Arrange
-        Guid nonExistingId = Guid.NewGuid();
+        Guid nonExistingBookingId = Guid.NewGuid();
 
         await using (var context = CreateContext())
         {
-            var @event = GetTestEvent();
-            var booking = Booking.Create(@event.Id);
-            var bookingId = booking.Id;
+            var user = GetTestUser();
+            var userRepository = new UserRepository(context);
+            await userRepository.Add(user);
 
+            var @event = GetTestEvent();
             var eventRepository = new EventRepository(context);
             await eventRepository.Add(@event);
+
+            var booking = Booking.Create(@event.Id, user.Id);
+            var bookingId = booking.Id;
 
             var bookingRepository = new BookingRepository(context);
             await bookingRepository.Add(booking);
@@ -77,7 +85,7 @@ public class BookingRepositoryTests(PostgreSqlFixture fixture) : BaseRepositoryT
         await using (var context = CreateContext())
         {
             var bookingRepository = new BookingRepository(context);
-            var nullBooking = await bookingRepository.FindAsync(nonExistingId);
+            var nullBooking = await bookingRepository.FindAsync(nonExistingBookingId);
             nullBooking.Should().BeNull();
         }
     }
@@ -89,14 +97,19 @@ public class BookingRepositoryTests(PostgreSqlFixture fixture) : BaseRepositoryT
     public async Task Add_DuplicateBooking_ThrowsDbUpdateException()
     {
         // Arrange
-        var @event = GetTestEvent();
-        var booking = Booking.Create(@event.Id);
+        Booking booking;
 
         await using (var context = CreateContext())
         {
+            var user = GetTestUser();
+            var userRepository = new UserRepository(context);
+            await userRepository.Add(user);
+
+            var @event = GetTestEvent();
             var eventRepository = new EventRepository(context);
             await eventRepository.Add(@event);
 
+            booking = Booking.Create(@event.Id, user.Id);
             var bookingRepository = new BookingRepository(context);
             await bookingRepository.Add(booking);
         }
@@ -117,9 +130,15 @@ public class BookingRepositoryTests(PostgreSqlFixture fixture) : BaseRepositoryT
     {
         // Arrange
         var nonExistingEventId = Guid.NewGuid();
+        Guid userId;
 
         await using (var context = CreateContext())
         {
+            var user = GetTestUser();
+            var userRepository = new UserRepository(context);
+            await userRepository.Add(user);
+            userId = user.Id;
+
             var @event = GetTestEvent();
             var eventRepository = new EventRepository(context);
             await eventRepository.Add(@event);
@@ -128,7 +147,7 @@ public class BookingRepositoryTests(PostgreSqlFixture fixture) : BaseRepositoryT
         // Act & Assert
         await using (var context = CreateContext())
         {
-            var booking = Booking.Create(nonExistingEventId);
+            var booking = Booking.Create(nonExistingEventId, userId);
             var bookingRepository = new BookingRepository(context);
             await Assert.ThrowsAsync<DbUpdateException>(() => bookingRepository.Add(booking));
         }
@@ -145,6 +164,10 @@ public class BookingRepositoryTests(PostgreSqlFixture fixture) : BaseRepositoryT
 
         await using (var context = CreateContext())
         {
+            var user = GetTestUser();
+            var userRepository = new UserRepository(context);
+            await userRepository.Add(user);
+
             var @event = GetTestEvent();
             var eventRepository = new EventRepository(context);
             await eventRepository.Add(@event);
@@ -153,7 +176,7 @@ public class BookingRepositoryTests(PostgreSqlFixture fixture) : BaseRepositoryT
 
             foreach (var _ in Enumerable.Range(0, @event.AvailableSeats))
             {
-                await bookingRepository.Add(Booking.Create(@event.Id));
+                await bookingRepository.Add(Booking.Create(@event.Id, user.Id));
             }
 
             var bookings = await bookingRepository.GetAll();
@@ -196,13 +219,17 @@ public class BookingRepositoryTests(PostgreSqlFixture fixture) : BaseRepositoryT
 
         await using (var context = CreateContext())
         {
+            var user = GetTestUser();
+            var userRepository = new UserRepository(context);
+            await userRepository.Add(user);
+
             var @event = GetTestEvent();
             eventId = @event.Id;
 
             var eventRepository = new EventRepository(context);
             await eventRepository.Add(@event);
 
-            var booking = Booking.Create(eventId);
+            var booking = Booking.Create(eventId, user.Id);
             bookingId = booking.Id;
 
             var bookingRepository = new BookingRepository(context);

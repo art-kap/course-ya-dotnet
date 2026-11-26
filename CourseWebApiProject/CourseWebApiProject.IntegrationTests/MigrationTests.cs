@@ -13,7 +13,7 @@ public class MigrationTests(PostgreSqlFixture fixture) : BaseRepositoryTests(fix
     public async Task ApplyMigrations_ShouldCreateDatabaseAndTablesWithoutErrors()
     {
         // Arrange
-        var expectedTableNames = new List<string> { "events", "bookings" };
+        var expectedTableNames = new List<string> { "events", "bookings", "users" };
         var sqlCommand = "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public';";
 
         // Act

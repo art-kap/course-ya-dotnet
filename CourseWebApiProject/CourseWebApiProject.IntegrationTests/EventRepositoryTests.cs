@@ -251,14 +251,17 @@ public class EventRepositoryTests(PostgreSqlFixture fixture) : BaseRepositoryTes
 
         await using (var context = CreateContext())
         {
+            var user = GetTestUser();
+            var userRepository = new UserRepository(context);
+            await userRepository.Add(user);
+
             var @event = GetTestEvent();
             eventId = @event.Id;
 
             var eventRepository = new EventRepository(context);
             await eventRepository.Add(@event);
 
-            var booking = Booking.Create(eventId);
-
+            var booking = Booking.Create(eventId, user.Id);
             var bookingRepository = new BookingRepository(context);
             await bookingRepository.Add(booking);
         }
@@ -323,6 +326,10 @@ public class EventRepositoryTests(PostgreSqlFixture fixture) : BaseRepositoryTes
 
         await using (var context = CreateContext())
         {
+            var user = GetTestUser();
+            var userRepository = new UserRepository(context);
+            await userRepository.Add(user);
+
             var @event = GetTestEvent();
             eventId = @event.Id;
 
@@ -333,7 +340,7 @@ public class EventRepositoryTests(PostgreSqlFixture fixture) : BaseRepositoryTes
 
             foreach (var _ in Enumerable.Range(0, @event.AvailableSeats))
             {
-                var booking = Booking.Create(eventId);
+                var booking = Booking.Create(eventId, user.Id);
                 await bookingRepository.Add(booking);
                 expectedBookingIds.Add(booking.Id.ToString());
             }
