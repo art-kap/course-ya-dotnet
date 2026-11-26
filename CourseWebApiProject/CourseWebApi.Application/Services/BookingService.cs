@@ -64,24 +64,24 @@ public class BookingService(IBookingRepository bookingStore, IEventRepository ev
 
     public async Task TryConfirmBookingAsync(Guid bookingId, CancellationToken ct = default)
     {
-        var booking = await bookingStore.FindAsync(bookingId, ct) ?? throw new BookingNotFoundException(bookingId);
-        var @event = await eventStore.FindAsync(booking.EventId, ct) ?? throw new EventNotFoundException(booking.EventId);
+        var booking = await _bookingStore.FindAsync(bookingId, ct) ?? throw new BookingNotFoundException(bookingId);
+        var @event = await _eventStore.FindAsync(booking.EventId, ct) ?? throw new EventNotFoundException(booking.EventId);
 
         // Имитация обработки бронирования
         await Task.Delay(ProcessingDelay, ct);
 
         booking.Confirm();
-        await bookingStore.SaveChangesAsync(ct);
+        await _bookingStore.SaveChangesAsync(ct);
     }
 
     public async Task RejectBookingAsync(Guid bookingId, CancellationToken ct = default)
     {
-        var booking = await bookingStore.FindAsync(bookingId, ct) ?? throw new BookingNotFoundException(bookingId);
-        var @event = await eventStore.FindAsync(booking.EventId, ct) ?? throw new EventNotFoundException(booking.EventId);
+        var booking = await _bookingStore.FindAsync(bookingId, ct) ?? throw new BookingNotFoundException(bookingId);
+        var @event = await _eventStore.FindAsync(booking.EventId, ct) ?? throw new EventNotFoundException(booking.EventId);
 
         booking.Reject();
         @event.ReleaseSeats();
-        await bookingStore.SaveChangesAsync(ct);
+        await _bookingStore.SaveChangesAsync(ct);
     }
 
     public async Task CancelBooking(Guid bookingId, Guid userId)
@@ -95,6 +95,6 @@ public class BookingService(IBookingRepository bookingStore, IEventRepository ev
         }
 
         booking.Cancel();
-        await bookingStore.SaveChangesAsync();
+        await _bookingStore.SaveChangesAsync();
     }
 }
