@@ -470,8 +470,8 @@ public class BookingServiceTests
     {
         // Arrange
         var validEventDto = EventsTestsHelper.GetValidEventCreate();
-        var bookedUserDto = EventsTestsHelper.GetTestUserCreate();
-        var cancellingUserDto = EventsTestsHelper.GetTestUserCreate();
+        var bookedUserDto = EventsTestsHelper.GetTestUserCreate("first");
+        var cancellingUserDto = EventsTestsHelper.GetTestUserCreate("second");
 
         Guid bookingId, cancellingUserId;
 

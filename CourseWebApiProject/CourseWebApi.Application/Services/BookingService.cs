@@ -28,7 +28,7 @@ public class BookingService(IBookingRepository bookingStore, IEventRepository ev
 
             if (bookingsCount >= PendingBookingsUserLimit)
             {
-                throw new PendingBookingsLimitException(userId);
+                throw new PendingBookingsLimitException(PendingBookingsUserLimit);
             }
 
             var @event = await _eventStore.FindAsync(eventId) ?? throw new EventNotFoundException(eventId);

@@ -97,6 +97,13 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
                 _logger.LogWarning(exception, message);
                 break;
 
+            case LoginAlreadyExistsException:
+                statusCode = HttpStatusCode.Conflict;
+                title = "Отказано в регистрации.";
+                message = exception.Message;
+                _logger.LogWarning(exception, message);
+                break;
+
             default:
                 // По умолчанию возвращаем 500 ошибку
                 statusCode = HttpStatusCode.InternalServerError;

@@ -2,6 +2,7 @@
 using CourseWebApi.Application.Interfaces;
 using CourseWebApi.Application.Mappings;
 using CourseWebApi.Domain.Entities;
+using CourseWebApi.Domain.Exceptions;
 using System.Security.Authentication;
 
 namespace CourseWebApi.Application.Services;
@@ -15,6 +16,11 @@ public class UserService(IUserRepository userStore, IPasswordHasher passwordHash
 
     public async Task<UserInfo> AddUser(UserCreate userCreate)
     {
+        if (await _userStore.FindByLogin(userCreate.Login) != null)
+        {
+            throw new LoginAlreadyExistsException(userCreate.Login);
+        }
+
         var newUser = User.Create(userCreate.Login, _passwordHasher.Hash(userCreate.Password), userCreate.Role);
         await _userStore.Add(newUser);
 

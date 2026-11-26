@@ -16,8 +16,10 @@ public class AuthController(IUserService _userService) : ControllerBase
     /// </summary>
     /// <param name="userCreate">Данные пользователя</param>
     /// <response code="204">Возвращается в случае успешного создания пользователя</response>
+    /// <response code="409">Возвращается, если логин уже существует</response>
     [HttpPost("register")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     [Produces("application/json")]
     public async Task<ActionResult> Register([FromBody] UserCreate userCreate)
     {

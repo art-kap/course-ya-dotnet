@@ -84,9 +84,9 @@ public static class EventsTestsHelper
         return GetValidEventCreate().ToEvent();
     }
 
-    public static UserCreate GetTestUserCreate()
+    public static UserCreate GetTestUserCreate(string login = "user")
     {
-        return new UserCreate("user", "", UserRole.User);
+        return new UserCreate(login, "", UserRole.User);
     }
 
     public static UserCreate GetTestAdminCreate()

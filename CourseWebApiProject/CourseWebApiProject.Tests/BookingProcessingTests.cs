@@ -297,7 +297,7 @@ public class BookingProcessingTests
 
             for (int i = 0; i < usersCount; i++)
             {
-                var userDto = EventsTestsHelper.GetTestUserCreate();
+                var userDto = EventsTestsHelper.GetTestUserCreate($"user_{i}");
                 var userInfo = await userService.AddUser(userDto);
                 userIdBag.Add(userInfo.Id);
             }

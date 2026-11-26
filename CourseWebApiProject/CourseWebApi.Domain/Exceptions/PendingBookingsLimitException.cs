@@ -1,3 +1,3 @@
 ﻿namespace CourseWebApi.Domain.Exceptions;
 
-public class PendingBookingsLimitException(Guid userId) : Exception($"Превышен лимит активных броней для пользователя {userId}.");
+public class PendingBookingsLimitException(int limit) : Exception($"Превышен лимит в {limit} активных броней.");

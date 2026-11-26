@@ -19,9 +19,11 @@ public class BookingsController(IBookingService _bookingService) : ControllerBas
     /// </summary>
     /// <param name="id">id брони</param>
     /// <response code="200">Возвращается в случае успешного ответа</response>
+    /// <response code="401">Возвращается, если пользователь не вошел в систему</response>
     /// <response code="404">Возвращается, если нет брони с данным id</response>
     [HttpGet("{id:Guid}")]
     [ProducesResponseType(typeof(BookingInfo), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [Produces("application/json")]
     public async Task<ActionResult<BookingInfo>> GetById([FromRoute] Guid id)
@@ -35,11 +37,13 @@ public class BookingsController(IBookingService _bookingService) : ControllerBas
     /// </summary>
     /// <param name="id">id брони</param>
     /// <response code="204">Возвращается в случае успешной отмены</response>
+    /// <response code="401">Возвращается, если пользователь не вошел в систему</response>
     /// <response code="403">Возвращается в случае отсутствия прав на удаление</response>
     /// <response code="404">Возвращается, если нет брони с данным id</response>
     /// <response code="409">Возвращается, если бронь с данным id была отменена ранее</response>
     [HttpDelete("{id:Guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
