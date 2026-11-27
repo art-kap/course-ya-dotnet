@@ -47,12 +47,14 @@ public class BookingsController(IBookingService _bookingService) : ControllerBas
     /// </summary>
     /// <param name="id">id брони</param>
     /// <response code="204">Возвращается в случае успешной отмены</response>
+    /// <response code="400">Возвращается, если id пользователя не определился</response>
     /// <response code="401">Возвращается, если пользователь не вошел в систему</response>
     /// <response code="403">Возвращается в случае отсутствия прав на удаление</response>
     /// <response code="404">Возвращается, если нет брони с данным id</response>
-    /// <response code="409">Возвращается, если бронь с данным id была отменена ранее</response>
+    /// <response code="409">Возвращается, если бронь с данным id была отменена/отклонена ранее</response>
     [HttpDelete("{id:Guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

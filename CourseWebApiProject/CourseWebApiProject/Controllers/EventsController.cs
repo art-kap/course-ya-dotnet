@@ -18,11 +18,9 @@ public class EventsController(IEventService _eventService, IBookingService _book
     /// Получить список событий по фильтру
     /// </summary>
     /// <response code="200">Возвращается в случае успешного ответа</response>
-    /// <response code="401">Возвращается, если пользователь не вошел в систему</response>
     [AllowAnonymous]
     [HttpGet]
     [ProducesResponseType(typeof(PaginatedResult), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [Produces("application/json")]
     public async Task<ActionResult<PaginatedResult>> GetAll([FromQuery] EventsQuery query)
     {
@@ -34,12 +32,10 @@ public class EventsController(IEventService _eventService, IBookingService _book
     /// </summary>
     /// <param name="id">id события</param>
     /// <response code="200">Возвращается в случае успешного ответа</response>
-    /// <response code="401">Возвращается, если пользователь не вошел в систему</response>
     /// <response code="404">Возвращается, если нет события с данным id</response>
     [AllowAnonymous]
     [HttpGet("{id:Guid}")]
     [ProducesResponseType(typeof(EventInfo), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [Produces("application/json")]
     public async Task<ActionResult<EventInfo>> GetById([FromRoute] Guid id)

@@ -8,6 +8,8 @@ public interface IBookingRepository
 
     Task<Booking?> FindAsync(Guid bookingId, CancellationToken ct = default);
 
+    Task<bool> ContainsId(Guid bookingId, CancellationToken ct = default);
+
     Task<IReadOnlyCollection<Booking>> GetAll(CancellationToken ct = default);
 
     Task<IReadOnlyCollection<Booking>> GetPending(CancellationToken ct = default);

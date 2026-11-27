@@ -410,7 +410,7 @@ public class BookingServiceTests
     /// Проверка отклонения брони и откат количества доступных мест
     /// </summary>
     [Fact]
-    public async Task ConfirmAndReject_Booking_ShouldReleaseSeats()
+    public async Task Reject_Booking_ShouldReleaseSeats()
     {
         // Arrange
         var validEventDto = EventsTestsHelper.GetValidEventCreate();
@@ -433,8 +433,6 @@ public class BookingServiceTests
             var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
             var booking = await bookingService.CreateBookingAsync(eventId, userId);
             bookingId = booking.Id;
-
-            await bookingService.TryConfirmBookingAsync(bookingId);
         }
 
         // Act

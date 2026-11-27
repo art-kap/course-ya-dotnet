@@ -19,6 +19,11 @@ public class BookingRepository(AppDbContext context) : IBookingRepository
         return await _context.Bookings.FindAsync(bookingId, ct);
     }
 
+    public async Task<bool> ContainsId(Guid bookingId, CancellationToken ct = default)
+    {
+        return await _context.Bookings.AnyAsync(b => b.Id == bookingId, ct);
+    }
+
     public async Task<IReadOnlyCollection<Booking>> GetAll(CancellationToken ct = default)
     {
         return await _context.Bookings.ToListAsync(ct);

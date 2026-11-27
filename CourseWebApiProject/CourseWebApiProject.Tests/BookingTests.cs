@@ -119,4 +119,24 @@ public class BookingTests
         // Assert
         Assert.Throws<BookingIsAlreadyCancelledException>(() => booking.Cancel());
     }
+
+    /// <summary>
+    /// Выбрасывает исключение при отмене отклоненного бронирования
+    /// </summary>
+    [Fact]
+    public async Task Cancel_RejectedBooking_ShouldThrowBookingIsAlreadyRejectedException()
+    {
+        // Arrange
+        var timeNow = DateTime.Now.ToUniversalTime();
+        var userId = Guid.NewGuid();
+
+        var @event = EventsTestsHelper.GetValidEvent();
+        var booking = Booking.Create(@event.Id, userId);
+
+        // Act
+        booking.Reject();
+
+        // Assert
+        Assert.Throws<BookingIsAlreadyRejectedException>(() => booking.Cancel());
+    }
 }

@@ -54,10 +54,12 @@ public class Booking
             throw new BookingIsAlreadyCancelledException(Id);
         }
 
-        if (Status != BookingStatus.Rejected)
+        if (Status == BookingStatus.Rejected)
         {
-            Status = BookingStatus.Cancelled;
-            ProcessedAt = DateTime.Now.ToUniversalTime();
+            throw new BookingIsAlreadyRejectedException(Id);
         }
+
+        Status = BookingStatus.Cancelled;
+        ProcessedAt = DateTime.Now.ToUniversalTime();
     }
 }

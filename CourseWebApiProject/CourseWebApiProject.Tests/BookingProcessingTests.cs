@@ -338,4 +338,68 @@ public class BookingProcessingTests
         results.Count(r => r).Should().Be(usersCount * EventsTestsHelper.ActiveBookingsLimit);
         response.AvailableSeats.Should().Be(0);
     }
+
+    /// <summary>
+    /// Проверяет отмену бронирования в процессе ее обработки
+    /// </summary>
+    [Fact]
+    public async Task Concurrency_CancelDuringProcessing_ShouldCancelBooking()
+    {
+        // Arrange
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var backgroundService = scope.ServiceProvider.GetRequiredService<IHostedService>();
+            await backgroundService.StartAsync(CancellationToken.None);
+        }
+
+        var delay = TimeSpan.FromSeconds(2);
+
+        const int totalSeats = 10;
+        var validEventDto = EventsTestsHelper.GetValidEventCreate(totalSeats);
+        var userDto = EventsTestsHelper.GetTestUserCreate();
+        var isAdmin = userDto.Role == UserRole.Admin;
+
+        Guid eventId, bookingId, userId;
+
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
+            var userInfo = await userService.AddUser(userDto);
+            userId = userInfo.Id;
+
+            var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
+            var eventInfoBeforeBooking = await eventService.AddEvent(validEventDto);
+            eventId = eventInfoBeforeBooking.Id;
+
+            var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
+            var booking = await bookingService.CreateBookingAsync(eventId, userId);
+            bookingId = booking.Id;
+        }
+
+        await Task.Delay(delay);
+
+        // Act
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
+            await bookingService.CancelBooking(bookingId, userId, isAdmin);
+        }
+
+        await Task.Delay(delay);
+
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var backgroundService = scope.ServiceProvider.GetRequiredService<IHostedService>();
+            await backgroundService.StopAsync(CancellationToken.None);
+        }
+
+        // Assert
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
+            var booking = await bookingService.GetBookingByIdAsync(bookingId, userId, isAdmin);
+
+            booking.Status.Should().Be((int)BookingStatus.Cancelled);
+        }
+    }
 }
