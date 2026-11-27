@@ -56,8 +56,22 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
                 break;
 
             case AuthenticationException:
-                statusCode = HttpStatusCode.Unauthorized;
+                statusCode = HttpStatusCode.BadRequest;
                 title = "Ошибка аутентификации.";
+                message = exception.Message;
+                _logger.LogWarning(exception, message);
+                break;
+
+            case UserValidationException:
+                statusCode = HttpStatusCode.BadRequest;
+                title = "Отказано в регистрации.";
+                message = exception.Message;
+                _logger.LogWarning(exception, message);
+                break;
+
+            case LoginAlreadyExistsException:
+                statusCode = HttpStatusCode.BadRequest;
+                title = "Отказано в регистрации.";
                 message = exception.Message;
                 _logger.LogWarning(exception, message);
                 break;
@@ -93,13 +107,6 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
             case BookingIsAlreadyCancelledException:
                 statusCode = HttpStatusCode.Conflict;
                 title = "Бронирование было отменено ранее.";
-                message = exception.Message;
-                _logger.LogWarning(exception, message);
-                break;
-
-            case LoginAlreadyExistsException:
-                statusCode = HttpStatusCode.Conflict;
-                title = "Отказано в регистрации.";
                 message = exception.Message;
                 _logger.LogWarning(exception, message);
                 break;

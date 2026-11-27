@@ -16,6 +16,16 @@ public class UserService(IUserRepository userStore, IPasswordHasher passwordHash
 
     public async Task<UserInfo> AddUser(UserCreate userCreate)
     {
+        if (string.IsNullOrWhiteSpace(userCreate.Login))
+        {
+            throw new UserValidationException("пустой логин");
+        }
+
+        if (string.IsNullOrEmpty(userCreate.Password))
+        {
+            throw new UserValidationException("пустой пароль");
+        }
+
         if (await _userStore.FindByLogin(userCreate.Login) != null)
         {
             throw new LoginAlreadyExistsException(userCreate.Login);

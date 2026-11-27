@@ -85,14 +85,14 @@ public static class EventsTestsHelper
         return GetValidEventCreate().ToEvent();
     }
 
-    public static UserCreate GetTestUserCreate(string login = "user")
+    public static UserCreate GetTestUserCreate(string login = "user", string password = "pass")
     {
-        return new UserCreate(login, "", UserRole.User);
+        return new UserCreate(login, password, UserRole.User);
     }
 
-    public static UserCreate GetTestAdminCreate()
+    public static UserCreate GetTestAdminCreate(string login = "admin", string password = "pass")
     {
-        return new UserCreate("admin", "", UserRole.Admin);
+        return new UserCreate(login, password, UserRole.Admin);
     }
 
     private static DateTime GetStartTime() => DateTime.Now.ToUniversalTime().AddHours(1);
