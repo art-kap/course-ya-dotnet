@@ -88,6 +88,7 @@ public class BookingService(IBookingRepository bookingStore, IEventRepository ev
     {
         var booking = await _bookingStore.FindAsync(bookingId) ?? throw new BookingNotFoundException(bookingId);
         var user = await _userStore.FindById(userId) ?? throw new UserNotFoundException(userId);
+        var @event = await _eventStore.FindAsync(booking.EventId) ?? throw new EventNotFoundException(booking.EventId);
 
         if (booking.UserId != userId && user.Role != UserRole.Admin)
         {
@@ -95,6 +96,12 @@ public class BookingService(IBookingRepository bookingStore, IEventRepository ev
         }
 
         booking.Cancel();
+
+        if (booking.Status == BookingStatus.Cancelled)
+        {
+            @event.ReleaseSeats();
+        }
+
         await _bookingStore.SaveChangesAsync();
     }
 }

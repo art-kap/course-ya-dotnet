@@ -426,7 +426,8 @@ public class BookingServiceTests
         var bookedUserDto = EventsTestsHelper.GetTestUserCreate();
         var adminDto = EventsTestsHelper.GetTestAdminCreate();
 
-        Guid bookingId, adminId;
+        Guid eventId, bookingId, adminId;
+        int availableSeatsBeforeBooking, availableSeatsAfterBooking, availableSeatsAfterCancelling;
 
         using (var scope = _serviceProvider.CreateScope())
         {
@@ -437,15 +438,21 @@ public class BookingServiceTests
 
             var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
             var eventInfo = await eventService.AddEvent(validEventDto);
+            eventId = eventInfo.Id;
+            availableSeatsBeforeBooking = eventInfo.AvailableSeats;
 
             var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
-            var booking = await bookingService.CreateBookingAsync(eventInfo.Id, bookedUserInfo.Id);
+            var booking = await bookingService.CreateBookingAsync(eventId, bookedUserInfo.Id);
             bookingId = booking.Id;
         }
 
         // Act
         using (var scope = _serviceProvider.CreateScope())
         {
+            var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
+            var eventInfoAfterBooking = await eventService.GetEvent(eventId);
+            availableSeatsAfterBooking = eventInfoAfterBooking.AvailableSeats;
+
             var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
             await bookingService.CancelBooking(bookingId, adminId);
         }
@@ -454,12 +461,18 @@ public class BookingServiceTests
 
         using (var scope = _serviceProvider.CreateScope())
         {
+            var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
+            var eventInfoAfterCancelling = await eventService.GetEvent(eventId);
+            availableSeatsAfterCancelling = eventInfoAfterCancelling.AvailableSeats;
+
             var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
             cancelledBooking = await bookingService.GetBookingByIdAsync(bookingId);
         }
 
         // Assert
         cancelledBooking.Status.Should().Be((int)BookingStatus.Cancelled);
+        availableSeatsAfterBooking.Should().Be(availableSeatsBeforeBooking - 1);
+        availableSeatsAfterCancelling.Should().Be(availableSeatsBeforeBooking);
     }
 
     /// <summary>

@@ -31,14 +31,20 @@ public class Booking
 
     public void Confirm()
     {
-        Status = BookingStatus.Confirmed;
-        ProcessedAt = DateTime.Now.ToUniversalTime();
+        if (Status == BookingStatus.Pending)
+        {
+            Status = BookingStatus.Confirmed;
+            ProcessedAt = DateTime.Now.ToUniversalTime();
+        }
     }
 
     public void Reject()
     {
-        Status = BookingStatus.Rejected;
-        ProcessedAt = DateTime.Now.ToUniversalTime();
+        if (Status == BookingStatus.Pending)
+        {
+            Status = BookingStatus.Rejected;
+            ProcessedAt = DateTime.Now.ToUniversalTime();
+        }        
     }
 
     public void Cancel()
@@ -48,7 +54,10 @@ public class Booking
             throw new BookingIsAlreadyCancelledException(Id);
         }
 
-        Status = BookingStatus.Cancelled;
-        ProcessedAt = DateTime.Now.ToUniversalTime();
+        if (Status != BookingStatus.Rejected)
+        {
+            Status = BookingStatus.Cancelled;
+            ProcessedAt = DateTime.Now.ToUniversalTime();
+        }
     }
 }
