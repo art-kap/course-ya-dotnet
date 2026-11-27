@@ -14,5 +14,5 @@ public interface IBookingRepository
 
     Task SaveChangesAsync(CancellationToken ct = default);
 
-    Task<int> CountPendingByUser(Guid userId, CancellationToken ct = default);
+    Task<int> CountActiveByUser(Guid userId, CancellationToken ct = default);
 }

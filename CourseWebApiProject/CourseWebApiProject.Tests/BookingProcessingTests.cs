@@ -143,7 +143,7 @@ public class BookingProcessingTests
                 {
                     return false;
                 }
-                catch (PendingBookingsLimitException)
+                catch (ActiveBookingsLimitException)
                 {
                     return false;
                 }
@@ -224,15 +224,14 @@ public class BookingProcessingTests
     }
 
     /// <summary>
-    /// Проверяет лимит пользователя на кол-во активных бронирований
+    /// Проверяет лимит пользователя на кол-во активных бронирований (конкурентность)
     /// </summary>
     [Fact]
-    public async Task ConcurrentBookings_SingleUser_ShouldLimitPendingBookings()
+    public async Task ConcurrentBookings_SingleUser_ShouldLimitActiveBookings()
     {
         // Arrange
-        const int totalSeats = 30;
-        const int concurrentBookings = 25;
-        const int pendingBookingsLimit = 10;
+        const int totalSeats = EventsTestsHelper.ActiveBookingsLimit * 3;
+        const int concurrentBookings = EventsTestsHelper.ActiveBookingsLimit * 2;
         var validEventDto = EventsTestsHelper.GetValidEventCreate(totalSeats);
         var userDto = EventsTestsHelper.GetTestUserCreate();
 
@@ -262,7 +261,7 @@ public class BookingProcessingTests
 
                     return true;
                 }
-                catch (PendingBookingsLimitException)
+                catch (ActiveBookingsLimitException)
                 {
                     return false;
                 }
@@ -271,20 +270,19 @@ public class BookingProcessingTests
         var results = await Task.WhenAll(tasks);
 
         // Assert
-        results.Count(r => r).Should().Be(pendingBookingsLimit);
+        results.Count(r => r).Should().Be(EventsTestsHelper.ActiveBookingsLimit);
     }
 
     /// <summary>
-    /// Проверяет независимость лимитов на кол-во активных бронирований для разных пользователей
+    /// Проверяет независимость лимитов на кол-во активных бронирований для разных пользователей (конкурентность)
     /// </summary>
     [Fact]
-    public async Task ConcurrentBookings_MultipleUsers_ShouldLimitPendingBookingsIndependently()
+    public async Task ConcurrentBookings_MultipleUsers_ShouldLimitActiveBookingsIndependently()
     {
         // Arrange
-        const int concurrentBookings = 15;
-        const int pendingBookingsLimit = 10;
+        const int concurrentBookingsPerUser = 15;
         const int usersCount = 5;
-        const int totalSeats = usersCount * pendingBookingsLimit;
+        const int totalSeats = usersCount * EventsTestsHelper.ActiveBookingsLimit;
 
         var validEventDto = EventsTestsHelper.GetValidEventCreate(totalSeats);
         Guid eventId;
@@ -308,7 +306,7 @@ public class BookingProcessingTests
         }
 
         // Act
-        var tasks = Enumerable.Range(0, usersCount * concurrentBookings)
+        var tasks = Enumerable.Range(0, usersCount * concurrentBookingsPerUser)
             .Select(async taskId =>
             {
                 try
@@ -320,7 +318,7 @@ public class BookingProcessingTests
 
                     return true;
                 }
-                catch (PendingBookingsLimitException)
+                catch (ActiveBookingsLimitException)
                 {
                     return false;
                 }
@@ -336,7 +334,7 @@ public class BookingProcessingTests
         }
 
         // Assert
-        results.Count(r => r).Should().Be(usersCount * pendingBookingsLimit);
+        results.Count(r => r).Should().Be(usersCount * EventsTestsHelper.ActiveBookingsLimit);
         response.AvailableSeats.Should().Be(0);
     }
 }

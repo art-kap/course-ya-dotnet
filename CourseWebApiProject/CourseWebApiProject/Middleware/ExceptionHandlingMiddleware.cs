@@ -83,7 +83,7 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
                 _logger.LogWarning(exception, message);
                 break;
 
-            case PendingBookingsLimitException:
+            case ActiveBookingsLimitException:
                 statusCode = HttpStatusCode.Conflict;
                 title = "Отказано в бронировании.";
                 message = exception.Message;

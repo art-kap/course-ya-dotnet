@@ -14,7 +14,7 @@ public class BookingService(IBookingRepository bookingStore, IEventRepository ev
     private readonly IUserRepository _userStore = userStore;
     private readonly static SemaphoreSlim CreateBookingSemaphore = new(1, 1);
     private readonly static TimeSpan ProcessingDelay = TimeSpan.FromSeconds(2);
-    private readonly static int PendingBookingsUserLimit = 10;
+    private readonly static int ActiveBookingsUserLimit = 10;
 
     public async Task<BookingInfo> CreateBookingAsync(Guid eventId, Guid userId)
     {
@@ -24,11 +24,11 @@ public class BookingService(IBookingRepository bookingStore, IEventRepository ev
 
         try
         {
-            var bookingsCount = await _bookingStore.CountPendingByUser(userId);
+            var bookingsCount = await _bookingStore.CountActiveByUser(userId);
 
-            if (bookingsCount >= PendingBookingsUserLimit)
+            if (bookingsCount >= ActiveBookingsUserLimit)
             {
-                throw new PendingBookingsLimitException(PendingBookingsUserLimit);
+                throw new ActiveBookingsLimitException(ActiveBookingsUserLimit);
             }
 
             var @event = await _eventStore.FindAsync(eventId) ?? throw new EventNotFoundException(eventId);

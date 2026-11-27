@@ -10,6 +10,7 @@ public static class EventsTestsHelper
     public const string CurrentMonthTitle = "event in the current month";
     public const string NextMonthTitle = "event in the next month";
     public const int DefaultTotalSeats = 3;
+    public const int ActiveBookingsLimit = 10; // задано в BookingService
 
     public static EventCreate GetValidEventCreate(int totalSeats = DefaultTotalSeats)
     {

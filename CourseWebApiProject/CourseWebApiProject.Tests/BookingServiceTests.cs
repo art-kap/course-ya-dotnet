@@ -497,4 +497,44 @@ public class BookingServiceTests
             await Assert.ThrowsAsync<AccessDeniedException>(() => bookingService.CancelBooking(bookingId, cancellingUserId));
         }
     }
+
+    /// <summary>
+    /// Проверяет лимит пользователя на кол-во активных бронирований
+    /// </summary>
+    [Fact]
+    public async Task CreateBooking_LimitExceed_ShouldThrowActiveBookingsLimitException()
+    {
+        // Arrange
+        const int totalSeats = EventsTestsHelper.ActiveBookingsLimit + 1; // кол-во мест задаем с запасом
+        var validEventDto = EventsTestsHelper.GetValidEventCreate(totalSeats);
+        var userDto = EventsTestsHelper.GetTestUserCreate();
+
+        Guid eventId, userId;
+
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
+            var userInfo = await userService.AddUser(userDto);
+            userId = userInfo.Id;
+
+            var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
+            var eventInfo = await eventService.AddEvent(validEventDto);
+            eventId = eventInfo.Id;
+        }
+
+        // Act
+        for (int i = 0; i < EventsTestsHelper.ActiveBookingsLimit; i++)
+        {
+            using var scope = _serviceProvider.CreateAsyncScope();
+            var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
+            await bookingService.CreateBookingAsync(eventId, userId);
+        }
+
+        // Assert
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
+            await Assert.ThrowsAsync<ActiveBookingsLimitException>(() => bookingService.CreateBookingAsync(eventId, userId));
+        }
+    }
 }
