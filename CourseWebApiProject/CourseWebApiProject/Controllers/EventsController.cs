@@ -1,8 +1,8 @@
 ﻿using CourseWebApi.Application.Dto;
 using CourseWebApi.Application.Interfaces;
+using CourseWebApiProject.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace CourseWebApiProject.Controllers;
 
@@ -19,6 +19,7 @@ public class EventsController(IEventService _eventService, IBookingService _book
     /// </summary>
     /// <response code="200">Возвращается в случае успешного ответа</response>
     /// <response code="401">Возвращается, если пользователь не вошел в систему</response>
+    [AllowAnonymous]
     [HttpGet]
     [ProducesResponseType(typeof(PaginatedResult), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -35,6 +36,7 @@ public class EventsController(IEventService _eventService, IBookingService _book
     /// <response code="200">Возвращается в случае успешного ответа</response>
     /// <response code="401">Возвращается, если пользователь не вошел в систему</response>
     /// <response code="404">Возвращается, если нет события с данным id</response>
+    [AllowAnonymous]
     [HttpGet("{id:Guid}")]
     [ProducesResponseType(typeof(EventInfo), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -131,14 +133,14 @@ public class EventsController(IEventService _eventService, IBookingService _book
     [Produces("application/json")]
     public async Task<ActionResult<BookingInfo>> Post([FromRoute] Guid id)
     {
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+        var userId = User.GetUserId();
 
-        if (userIdClaim == null)
+        if (userId == null)
         {
             return BadRequest("Идентификатор пользователя не найден");
         }
 
-        var bookingInfo = await _bookingService.CreateBookingAsync(id, Guid.Parse(userIdClaim.Value));
+        var bookingInfo = await _bookingService.CreateBookingAsync(id, userId.Value);
         var resourceUrl = Url.Action(nameof(BookingsController.GetById), "Bookings", new { id = bookingInfo.Id });
         Response.Headers.Location = resourceUrl;
 

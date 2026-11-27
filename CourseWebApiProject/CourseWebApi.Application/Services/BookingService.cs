@@ -56,9 +56,15 @@ public class BookingService(IBookingRepository bookingStore, IEventRepository ev
         return bookingToAdd.ToInfo();
     }
 
-    public async Task<BookingInfo> GetBookingByIdAsync(Guid bookingId)
+    public async Task<BookingInfo> GetBookingByIdAsync(Guid bookingId, Guid requestUserId, bool isAdmin)
     {
         var bookingToGet = await _bookingStore.FindAsync(bookingId) ?? throw new BookingNotFoundException(bookingId);
+
+        if (bookingToGet.UserId != requestUserId && !isAdmin)
+        {
+            throw new AccessDeniedException(requestUserId);
+        }
+
         return bookingToGet.ToInfo();
     }
 
@@ -84,15 +90,15 @@ public class BookingService(IBookingRepository bookingStore, IEventRepository ev
         await _bookingStore.SaveChangesAsync(ct);
     }
 
-    public async Task CancelBooking(Guid bookingId, Guid userId)
+    public async Task CancelBooking(Guid bookingId, Guid requestUserId, bool isAdmin)
     {
         var booking = await _bookingStore.FindAsync(bookingId) ?? throw new BookingNotFoundException(bookingId);
-        var user = await _userStore.FindById(userId) ?? throw new UserNotFoundException(userId);
+        var user = await _userStore.FindById(requestUserId) ?? throw new UserNotFoundException(requestUserId);
         var @event = await _eventStore.FindAsync(booking.EventId) ?? throw new EventNotFoundException(booking.EventId);
 
-        if (booking.UserId != userId && user.Role != UserRole.Admin)
+        if (booking.UserId != requestUserId && !isAdmin)
         {
-            throw new AccessDeniedException(userId);
+            throw new AccessDeniedException(requestUserId);
         }
 
         booking.Cancel();

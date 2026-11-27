@@ -58,23 +58,24 @@ public class BookingProcessingTests
 
         var validEventDto = EventsTestsHelper.GetValidEventCreate();
         var userDto = EventsTestsHelper.GetTestUserCreate();
+        var isAdmin = userDto.Role == UserRole.Admin;
 
-        BookingInfo booking;
+        Guid bookingId, userId;
         EventInfo eventInfo;
 
         using (var scope = _serviceProvider.CreateScope())
         {
             var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
             var userInfo = await userService.AddUser(userDto);
+            userId = userInfo.Id;
 
             var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
             var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
 
             eventInfo = await eventService.AddEvent(validEventDto);
-            booking = await bookingService.CreateBookingAsync(eventInfo.Id, userInfo.Id);
+            var booking = await bookingService.CreateBookingAsync(eventInfo.Id, userInfo.Id);
+            bookingId = booking.Id;
         }
-
-        var bookingId = booking.Id;
 
         var serviceWorktime = TimeSpan.FromSeconds(5);
 
@@ -92,7 +93,7 @@ public class BookingProcessingTests
         using (var scope = _serviceProvider.CreateScope())
         {
             var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
-            handledBooking = await bookingService.GetBookingByIdAsync(bookingId);
+            handledBooking = await bookingService.GetBookingByIdAsync(bookingId, userId, isAdmin);
         }
 
         // Assert

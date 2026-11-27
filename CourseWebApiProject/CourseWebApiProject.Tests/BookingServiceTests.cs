@@ -239,9 +239,17 @@ public class BookingServiceTests
     {
         // Arrange
         var validEventDto = EventsTestsHelper.GetValidEventCreate();
+        var userDto = EventsTestsHelper.GetTestUserCreate();
+        var isAdmin = userDto.Role == UserRole.Admin;
+        
+        Guid userId;
 
         using (var scope = _serviceProvider.CreateScope())
         {
+            var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
+            var userInfo = await userService.AddUser(userDto);
+            userId = userInfo.Id;
+
             var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
             var eventInfo = await eventService.AddEvent(validEventDto);
         }
@@ -252,7 +260,68 @@ public class BookingServiceTests
         using (var scope = _serviceProvider.CreateScope())
         {
             var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
-            await Assert.ThrowsAsync<BookingNotFoundException>(() => bookingService.GetBookingByIdAsync(nonExistingId));
+            await Assert.ThrowsAsync<BookingNotFoundException>(() => bookingService.GetBookingByIdAsync(nonExistingId, userId, isAdmin));
+        }
+    }
+
+    /// <summary>
+    /// Неудача при попытке получить бронирование без прав админа
+    /// </summary>
+    [Fact]
+    public async Task GetById_AdminRights_ShouldThrowAccessDeniedExceptionIfNotAdmin()
+    {
+        // Arrange
+        var validEventDto = EventsTestsHelper.GetValidEventCreate();
+        var bookedUserDto = EventsTestsHelper.GetTestUserCreate(login: "booker");
+        var otherUserDto = EventsTestsHelper.GetTestUserCreate(login: "getter");
+        var adminDto = EventsTestsHelper.GetTestAdminCreate(login: "admin");
+
+        var isBookedUserAdmin = bookedUserDto.Role == UserRole.Admin;
+        var isOtherUserAdmin = otherUserDto.Role == UserRole.Admin;
+        var isAdminAdmin = adminDto.Role == UserRole.Admin;
+
+        Guid bookedUserId, otherUserId, adminId, bookingId;
+
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
+            var bookedUserInfo = await userService.AddUser(bookedUserDto);
+            var otherUserInfo = await userService.AddUser(otherUserDto);
+            var adminInfo = await userService.AddUser(adminDto);
+            bookedUserId = bookedUserInfo.Id;
+            otherUserId = otherUserInfo.Id;
+            adminId = adminInfo.Id;
+
+            var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
+            var eventInfo = await eventService.AddEvent(validEventDto);
+
+            var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
+            var booking = await bookingService.CreateBookingAsync(eventInfo.Id, bookedUserId);
+            bookingId = booking.Id;
+        }
+
+        // Act
+        BookingInfo responseByBookedUser, responseByAdmin;
+
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
+            responseByBookedUser = await bookingService.GetBookingByIdAsync(bookingId, bookedUserId, isBookedUserAdmin);
+        }
+
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
+            responseByAdmin = await bookingService.GetBookingByIdAsync(bookingId, adminId, isAdminAdmin);
+        }
+
+        // Assert
+        responseByBookedUser.Should().BeEquivalentTo(responseByAdmin);
+
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
+            await Assert.ThrowsAsync<AccessDeniedException>(() => bookingService.GetBookingByIdAsync(bookingId, otherUserId, isOtherUserAdmin));
         }
     }
 
@@ -265,6 +334,7 @@ public class BookingServiceTests
         // Arrange
         var validEventDto = EventsTestsHelper.GetValidEventCreate();
         var userDto = EventsTestsHelper.GetTestUserCreate();
+        var isAdmin = userDto.Role == UserRole.Admin;
 
         Guid bookingId, userId;
 
@@ -294,7 +364,7 @@ public class BookingServiceTests
         using (var scope = _serviceProvider.CreateScope())
         {
             var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
-            bookingToConfirm = await bookingService.GetBookingByIdAsync(bookingId);
+            bookingToConfirm = await bookingService.GetBookingByIdAsync(bookingId, userId, isAdmin);
         }
 
         // Assert
@@ -425,6 +495,7 @@ public class BookingServiceTests
         var validEventDto = EventsTestsHelper.GetValidEventCreate();
         var bookedUserDto = EventsTestsHelper.GetTestUserCreate();
         var adminDto = EventsTestsHelper.GetTestAdminCreate();
+        var isAdminAdmin = adminDto.Role == UserRole.Admin;
 
         Guid eventId, bookingId, adminId;
         int availableSeatsBeforeBooking, availableSeatsAfterBooking, availableSeatsAfterCancelling;
@@ -454,7 +525,7 @@ public class BookingServiceTests
             availableSeatsAfterBooking = eventInfoAfterBooking.AvailableSeats;
 
             var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
-            await bookingService.CancelBooking(bookingId, adminId);
+            await bookingService.CancelBooking(bookingId, adminId, isAdminAdmin);
         }
 
         BookingInfo cancelledBooking;
@@ -466,7 +537,7 @@ public class BookingServiceTests
             availableSeatsAfterCancelling = eventInfoAfterCancelling.AvailableSeats;
 
             var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
-            cancelledBooking = await bookingService.GetBookingByIdAsync(bookingId);
+            cancelledBooking = await bookingService.GetBookingByIdAsync(bookingId, adminId, isAdminAdmin);
         }
 
         // Assert
@@ -485,6 +556,7 @@ public class BookingServiceTests
         var validEventDto = EventsTestsHelper.GetValidEventCreate();
         var bookedUserDto = EventsTestsHelper.GetTestUserCreate("first");
         var cancellingUserDto = EventsTestsHelper.GetTestUserCreate("second");
+        var isCancellingUserAdmin = cancellingUserDto.Role == UserRole.Admin;
 
         Guid bookingId, cancellingUserId;
 
@@ -507,7 +579,8 @@ public class BookingServiceTests
         using (var scope = _serviceProvider.CreateScope())
         {
             var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
-            await Assert.ThrowsAsync<AccessDeniedException>(() => bookingService.CancelBooking(bookingId, cancellingUserId));
+            await Assert.ThrowsAsync<AccessDeniedException>(() => bookingService.CancelBooking(bookingId,
+                cancellingUserId, isCancellingUserAdmin));
         }
     }
 
