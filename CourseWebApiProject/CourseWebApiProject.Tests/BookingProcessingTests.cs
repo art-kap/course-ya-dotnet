@@ -352,10 +352,12 @@ public class BookingProcessingTests
             await backgroundService.StartAsync(CancellationToken.None);
         }
 
+        int statusAfterCancelling, availableSeatsAfterCancelling;
+
         var delay = TimeSpan.FromSeconds(2);
 
-        const int totalSeats = 10;
-        var validEventDto = EventsTestsHelper.GetValidEventCreate(totalSeats);
+        const int initialTotalSeats = 10;
+        var validEventDto = EventsTestsHelper.GetValidEventCreate(initialTotalSeats);
         var userDto = EventsTestsHelper.GetTestUserCreate();
         var isAdmin = userDto.Role == UserRole.Admin;
 
@@ -393,13 +395,20 @@ public class BookingProcessingTests
             await backgroundService.StopAsync(CancellationToken.None);
         }
 
-        // Assert
         using (var scope = _serviceProvider.CreateScope())
         {
+            var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
+            var eventInfoAfterCancelling = await eventService.GetEvent(eventId);
+            availableSeatsAfterCancelling = eventInfoAfterCancelling.AvailableSeats;
+
             var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
             var booking = await bookingService.GetBookingByIdAsync(bookingId, userId, isAdmin);
+            statusAfterCancelling = booking.Status;
 
-            booking.Status.Should().Be((int)BookingStatus.Cancelled);
         }
+
+        // Assert
+        statusAfterCancelling.Should().Be((int)BookingStatus.Cancelled);
+        availableSeatsAfterCancelling.Should().Be(initialTotalSeats);
     }
 }

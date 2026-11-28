@@ -611,7 +611,8 @@ public class BookingServiceTests
         {
             using var scope = _serviceProvider.CreateAsyncScope();
             var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
-            await bookingService.CreateBookingAsync(eventId, userId);
+            var booking = await bookingService.CreateBookingAsync(eventId, userId);
+            await bookingService.TryConfirmBookingAsync(booking.Id);
         }
 
         // Assert

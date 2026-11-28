@@ -10,7 +10,7 @@ public class BookingTests
     /// Проверяет заполнение полей в созданном бронировании
     /// </summary>
     [Fact]
-    public async Task Create_Booking_NotNullProperties()
+    public void Create_Booking_NotNullProperties()
     {
         // Arrange
         var timeNow = DateTime.Now.ToUniversalTime();
@@ -32,7 +32,7 @@ public class BookingTests
     /// Проверяет изменение статуса бронирования на Confirm
     /// </summary>
     [Fact]
-    public async Task Confirm_Booking_ShouldBeConfirmed()
+    public void Confirm_Booking_ShouldBeConfirmed()
     {
         // Arrange
         var timeNow = DateTime.Now.ToUniversalTime();
@@ -56,7 +56,7 @@ public class BookingTests
     /// Проверяет изменение статуса бронирования на Reject
     /// </summary>
     [Fact]
-    public async Task Reject_Booking_ShouldBeRejected()
+    public void Reject_Booking_ShouldBeRejected()
     {
         // Arrange
         var timeNow = DateTime.Now.ToUniversalTime();
@@ -80,7 +80,7 @@ public class BookingTests
     /// Проверяет изменение статуса бронирования на Cancelled
     /// </summary>
     [Fact]
-    public async Task Cancel_Booking_ShouldBeCancelled()
+    public void Cancel_Booking_ShouldBeCancelled()
     {
         // Arrange
         var timeNow = DateTime.Now.ToUniversalTime();
@@ -104,7 +104,7 @@ public class BookingTests
     /// Выбрасывает исключение при повторной попытке отменить бронирование
     /// </summary>
     [Fact]
-    public async Task Cancel_CancelledBooking_ShouldThrowBookingIsAlreadyCancelledException()
+    public void Cancel_CancelledBooking_ShouldThrowBookingIsAlreadyCancelledException()
     {
         // Arrange
         var timeNow = DateTime.Now.ToUniversalTime();
@@ -124,10 +124,9 @@ public class BookingTests
     /// Выбрасывает исключение при отмене отклоненного бронирования
     /// </summary>
     [Fact]
-    public async Task Cancel_RejectedBooking_ShouldThrowBookingIsAlreadyRejectedException()
+    public void Cancel_RejectedBooking_ShouldThrowBookingIsAlreadyRejectedException()
     {
         // Arrange
-        var timeNow = DateTime.Now.ToUniversalTime();
         var userId = Guid.NewGuid();
 
         var @event = EventsTestsHelper.GetValidEvent();
