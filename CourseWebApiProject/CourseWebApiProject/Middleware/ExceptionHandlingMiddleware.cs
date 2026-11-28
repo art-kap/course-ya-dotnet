@@ -1,6 +1,7 @@
 ﻿using CourseWebApi.Domain.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
+using System.Security.Authentication;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Unicode;
@@ -47,6 +48,41 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
                 _logger.LogWarning(exception, message);
                 break;
 
+            case PastEventBookingException:
+                statusCode = HttpStatusCode.BadRequest;
+                title = "Событие уже началось.";
+                message = exception.Message;
+                _logger.LogWarning(exception, message);
+                break;
+
+            case AuthenticationException:
+                statusCode = HttpStatusCode.BadRequest;
+                title = "Ошибка аутентификации.";
+                message = exception.Message;
+                _logger.LogWarning(exception, message);
+                break;
+
+            case UserValidationException:
+                statusCode = HttpStatusCode.BadRequest;
+                title = "Отказано в регистрации.";
+                message = exception.Message;
+                _logger.LogWarning(exception, message);
+                break;
+
+            case LoginAlreadyExistsException:
+                statusCode = HttpStatusCode.BadRequest;
+                title = "Отказано в регистрации.";
+                message = exception.Message;
+                _logger.LogWarning(exception, message);
+                break;
+
+            case AccessDeniedException:
+                statusCode = HttpStatusCode.Forbidden;
+                title = "Недостаточно прав.";
+                message = exception.Message;
+                _logger.LogWarning(exception, message);
+                break;
+
             case EventHasBookingsException:
                 statusCode = HttpStatusCode.Conflict;
                 title = "Отказано в удалении события.";
@@ -57,6 +93,27 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
             case NoAvailableSeatsException:
                 statusCode = HttpStatusCode.Conflict;
                 title = "Отказано в бронировании.";
+                message = exception.Message;
+                _logger.LogWarning(exception, message);
+                break;
+
+            case ActiveBookingsLimitException:
+                statusCode = HttpStatusCode.Conflict;
+                title = "Отказано в бронировании.";
+                message = exception.Message;
+                _logger.LogWarning(exception, message);
+                break;
+
+            case BookingIsAlreadyCancelledException:
+                statusCode = HttpStatusCode.Conflict;
+                title = "Бронирование было отменено ранее.";
+                message = exception.Message;
+                _logger.LogWarning(exception, message);
+                break;
+
+            case BookingIsAlreadyRejectedException:
+                statusCode = HttpStatusCode.Conflict;
+                title = "Бронирование было отклонено ранее.";
                 message = exception.Message;
                 _logger.LogWarning(exception, message);
                 break;

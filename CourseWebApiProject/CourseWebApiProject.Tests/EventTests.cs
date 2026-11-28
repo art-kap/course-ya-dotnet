@@ -8,7 +8,7 @@ public class EventTests
     /// Проверяет обновление события
     /// </summary>
     [Fact]
-    public async Task Update_Event_UpdatedProperties()
+    public void Update_Event_UpdatedProperties()
     {
         // Arrange
         var @event = EventsTestsHelper.GetValidEvent();
@@ -33,7 +33,7 @@ public class EventTests
     /// Проверяет обновление полей при попытке забронировать место
     /// </summary>
     [Fact]
-    public async Task TryReserveSeats_Event_Success()
+    public void TryReserveSeats_Event_Success()
     {
         // Arrange
         var @event = EventsTestsHelper.GetValidEvent();
@@ -52,7 +52,7 @@ public class EventTests
     /// Пытается забронировать место до тех пор, пока есть места
     /// </summary>
     [Fact]
-    public async Task TryReserveSeats_Event_SuccessUntilNoSeatsAvailable()
+    public void TryReserveSeats_Event_SuccessUntilNoSeatsAvailable()
     {
         // Arrange
         var @event = EventsTestsHelper.GetValidEvent();
@@ -71,7 +71,7 @@ public class EventTests
     /// Проверяет обновление полей при освобождении места
     /// </summary>
     [Fact]
-    public async Task Release_Event_IncreasesAvailableSeats()
+    public void Release_Event_IncreasesAvailableSeats()
     {
         // Arrange
         var @event = EventsTestsHelper.GetValidEvent();

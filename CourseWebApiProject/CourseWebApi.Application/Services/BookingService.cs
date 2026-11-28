@@ -12,8 +12,9 @@ public class BookingService(IBookingRepository bookingStore, IEventRepository ev
     private readonly IEventRepository _eventStore = eventStore;
     private readonly static SemaphoreSlim CreateBookingSemaphore = new(1, 1);
     private readonly static TimeSpan ProcessingDelay = TimeSpan.FromSeconds(2);
+    private readonly static int ActiveBookingsUserLimit = 10;
 
-    public async Task<BookingInfo> CreateBookingAsync(Guid eventId)
+    public async Task<BookingInfo> CreateBookingAsync(Guid eventId, Guid userId)
     {
         Booking bookingToAdd;
 
@@ -21,7 +22,20 @@ public class BookingService(IBookingRepository bookingStore, IEventRepository ev
 
         try
         {
+            var bookingsCount = await _bookingStore.CountActiveByUser(userId);
+
+            if (bookingsCount >= ActiveBookingsUserLimit)
+            {
+                throw new ActiveBookingsLimitException(ActiveBookingsUserLimit);
+            }
+
             var @event = await _eventStore.FindAsync(eventId) ?? throw new EventNotFoundException(eventId);
+
+            if (DateTime.Now.ToUniversalTime() > @event.StartAt)
+            {
+                throw new PastEventBookingException(@event.Id);
+            }
+
             var canReserve = @event.TryReserveSeats();
 
             if (!canReserve)
@@ -29,7 +43,7 @@ public class BookingService(IBookingRepository bookingStore, IEventRepository ev
                 throw new NoAvailableSeatsException();
             }
 
-            bookingToAdd = Booking.Create(eventId);
+            bookingToAdd = Booking.Create(eventId, userId);
             await _bookingStore.Add(bookingToAdd);
         }
         finally
@@ -40,31 +54,62 @@ public class BookingService(IBookingRepository bookingStore, IEventRepository ev
         return bookingToAdd.ToInfo();
     }
 
-    public async Task<BookingInfo> GetBookingByIdAsync(Guid bookingId)
+    public async Task<BookingInfo> GetBookingByIdAsync(Guid bookingId, Guid requestUserId, bool isAdmin)
     {
         var bookingToGet = await _bookingStore.FindAsync(bookingId) ?? throw new BookingNotFoundException(bookingId);
+
+        if (bookingToGet.UserId != requestUserId && !isAdmin)
+        {
+            throw new AccessDeniedException(requestUserId);
+        }
+
         return bookingToGet.ToInfo();
     }
 
     public async Task TryConfirmBookingAsync(Guid bookingId, CancellationToken ct = default)
     {
-        var booking = await bookingStore.FindAsync(bookingId, ct) ?? throw new BookingNotFoundException(bookingId);
-        var @event = await eventStore.FindAsync(booking.EventId, ct) ?? throw new EventNotFoundException(booking.EventId);
+        if (!await _bookingStore.ContainsId(bookingId, ct))
+        {
+            throw new BookingNotFoundException(bookingId);
+        }
 
         // Имитация обработки бронирования
         await Task.Delay(ProcessingDelay, ct);
 
+        // Чтение бронирования с актуальным статусом
+        var booking = await _bookingStore.FindAsync(bookingId, ct) ?? throw new BookingNotFoundException(bookingId);
         booking.Confirm();
-        await bookingStore.SaveChangesAsync(ct);
+        
+        await _bookingStore.SaveChangesAsync(ct);
     }
 
     public async Task RejectBookingAsync(Guid bookingId, CancellationToken ct = default)
     {
-        var booking = await bookingStore.FindAsync(bookingId, ct) ?? throw new BookingNotFoundException(bookingId);
-        var @event = await eventStore.FindAsync(booking.EventId, ct) ?? throw new EventNotFoundException(booking.EventId);
+        var booking = await _bookingStore.FindAsync(bookingId, ct) ?? throw new BookingNotFoundException(bookingId);
+        var @event = await _eventStore.FindAsync(booking.EventId, ct) ?? throw new EventNotFoundException(booking.EventId);
 
-        booking.Reject();
+        if (booking.Status == BookingStatus.Pending)
+        {
+            booking.Reject();
+            @event.ReleaseSeats();
+        }
+        
+        await _bookingStore.SaveChangesAsync(ct);
+    }
+
+    public async Task CancelBooking(Guid bookingId, Guid requestUserId, bool isAdmin)
+    {
+        var booking = await _bookingStore.FindAsync(bookingId) ?? throw new BookingNotFoundException(bookingId);
+        var @event = await _eventStore.FindAsync(booking.EventId) ?? throw new EventNotFoundException(booking.EventId);
+
+        if (booking.UserId != requestUserId && !isAdmin)
+        {
+            throw new AccessDeniedException(requestUserId);
+        }
+
+        booking.Cancel();
         @event.ReleaseSeats();
-        await bookingStore.SaveChangesAsync(ct);
+
+        await _bookingStore.SaveChangesAsync();
     }
 }

@@ -1,5 +1,7 @@
 ﻿using CourseWebApi.Application.Dto;
 using CourseWebApi.Application.Interfaces;
+using CourseWebApiProject.Extensions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CourseWebApiProject.Controllers;
@@ -7,6 +9,7 @@ namespace CourseWebApiProject.Controllers;
 /// <summary>
 /// Контроллер для обработки HTTP-запросов
 /// </summary>
+[Authorize]
 [ApiController]
 [Route("events")]
 public class EventsController(IEventService _eventService, IBookingService _bookingService) : ControllerBase
@@ -15,6 +18,7 @@ public class EventsController(IEventService _eventService, IBookingService _book
     /// Получить список событий по фильтру
     /// </summary>
     /// <response code="200">Возвращается в случае успешного ответа</response>
+    [AllowAnonymous]
     [HttpGet]
     [ProducesResponseType(typeof(PaginatedResult), StatusCodes.Status200OK)]
     [Produces("application/json")]
@@ -29,6 +33,7 @@ public class EventsController(IEventService _eventService, IBookingService _book
     /// <param name="id">id события</param>
     /// <response code="200">Возвращается в случае успешного ответа</response>
     /// <response code="404">Возвращается, если нет события с данным id</response>
+    [AllowAnonymous]
     [HttpGet("{id:Guid}")]
     [ProducesResponseType(typeof(EventInfo), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -44,9 +49,14 @@ public class EventsController(IEventService _eventService, IBookingService _book
     /// <param name="eventCreate">Данные события</param>
     /// <response code="201">Возвращается в случае успешного создания события</response>
     /// <response code="400">Возвращается, если входные данные некорректны</response>
+    /// <response code="401">Возвращается, если пользователь не вошел в систему</response>
+    /// <response code="403">Возвращается, если у пользователя нет прав админа</response>
+    [Authorize(Roles = "Admin")]
     [HttpPost]
     [ProducesResponseType(typeof(EventInfo), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [Produces("application/json")]
     public async Task<ActionResult<EventInfo>> Post([FromBody] EventCreate eventCreate)
     {
@@ -61,10 +71,15 @@ public class EventsController(IEventService _eventService, IBookingService _book
     /// <param name="eventUpdate">Данные события</param>
     /// <response code="204">Возвращается в случае успешного обновления события</response>
     /// <response code="400">Возвращается, если входные данные некорректны</response>
+    /// <response code="401">Возвращается, если пользователь не вошел в систему</response>
+    /// <response code="403">Возвращается, если у пользователя нет прав админа</response>
     /// <response code="404">Возвращается, если нет события с данным id</response>
+    [Authorize(Roles = "Admin")]
     [HttpPut("{id:Guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [Produces("application/json")]
     public async Task<IActionResult> Put([FromRoute] Guid id, [FromBody] EventUpdate eventUpdate)
@@ -78,9 +93,15 @@ public class EventsController(IEventService _eventService, IBookingService _book
     /// </summary>
     /// <param name="id">id события</param>
     /// <response code="204">Возвращается в случае успешного удаления</response>
+    /// <response code="401">Возвращается, если пользователь не вошел в систему</response>
+    /// <response code="403">Возвращается, если у пользователя нет прав админа</response>
     /// <response code="404">Возвращается, если нет события с данным id</response>
+    /// <response code="409">Возвращается, если у события есть бронирования</response>
+    [Authorize(Roles = "Admin")]
     [HttpDelete("{id:Guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     [Produces("application/json")]
@@ -95,16 +116,27 @@ public class EventsController(IEventService _eventService, IBookingService _book
     /// </summary>
     /// <param name="id">id события</param>
     /// <response code="202">Возвращается в случае успешного создания брони</response>
+    /// <response code="400">Возвращается, если событие уже началось</response>
+    /// <response code="401">Возвращается, если пользователь не вошел в систему</response>
     /// <response code="404">Возвращается, если если нет события с данным id</response>
-    /// <response code="409">Возвращается, если отказано в бронировании</response>
+    /// <response code="409">Возвращается, если нет мест или достигнут лимит активных бронирований</response>
     [HttpPost("{id:Guid}/book")]
     [ProducesResponseType(typeof(BookingInfo), StatusCodes.Status202Accepted)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     [Produces("application/json")]
     public async Task<ActionResult<BookingInfo>> Post([FromRoute] Guid id)
     {
-        var bookingInfo = await _bookingService.CreateBookingAsync(id);
+        var userId = User.GetUserId();
+
+        if (userId == null)
+        {
+            return BadRequest("Идентификатор пользователя не найден");
+        }
+
+        var bookingInfo = await _bookingService.CreateBookingAsync(id, userId.Value);
         var resourceUrl = Url.Action(nameof(BookingsController.GetById), "Bookings", new { id = bookingInfo.Id });
         Response.Headers.Location = resourceUrl;
 

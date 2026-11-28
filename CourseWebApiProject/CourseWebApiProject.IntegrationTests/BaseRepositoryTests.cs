@@ -34,4 +34,14 @@ public abstract class BaseRepositoryTests(PostgreSqlFixture fixture) : IAsyncLif
         return new EventUpdate(_updatedEventTitle, "updated description", _timeNow.AddYears(-1).ToUniversalTime(),
             _timeNow.AddYears(-1).AddHours(2).ToUniversalTime());
     }
+
+    protected User GetTestUser()
+    {
+        return User.Create("user", "", UserRole.User);
+    }
+
+    protected User GetTestAdmin()
+    {
+        return User.Create("admin", "", UserRole.Admin);
+    }
 }

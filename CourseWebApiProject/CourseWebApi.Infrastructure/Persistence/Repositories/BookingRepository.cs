@@ -19,6 +19,11 @@ public class BookingRepository(AppDbContext context) : IBookingRepository
         return await _context.Bookings.FindAsync(bookingId, ct);
     }
 
+    public async Task<bool> ContainsId(Guid bookingId, CancellationToken ct = default)
+    {
+        return await _context.Bookings.AnyAsync(b => b.Id == bookingId, ct);
+    }
+
     public async Task<IReadOnlyCollection<Booking>> GetAll(CancellationToken ct = default)
     {
         return await _context.Bookings.ToListAsync(ct);
@@ -32,5 +37,14 @@ public class BookingRepository(AppDbContext context) : IBookingRepository
     public async Task SaveChangesAsync(CancellationToken ct = default)
     {
         await _context.SaveChangesAsync(ct);
+    }
+
+    public async Task<int> CountActiveByUser(Guid userId, CancellationToken ct = default)
+    {
+        return await _context.Bookings.Where(
+            b => b.UserId == userId
+            && b.Status != BookingStatus.Rejected 
+            && b.Status != BookingStatus.Cancelled
+            ).CountAsync(ct);
     }
 }

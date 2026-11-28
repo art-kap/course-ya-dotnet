@@ -1,58 +1,94 @@
 @CourseWebApiProject_HostAddress = http://localhost:5109
-@id = 00000000-0000-0000-0000-000000000000
 @title = TEST
-@from = 2026-08-01
-@to = 2026-08-31
+@from = 2027-08-01
+@to = 2027-08-31
 @page = 1
 @pageSize = 3
 
+@admin = "test_admin"
+@adminpassword = "test_admin_password"
+
+### Create admin
+POST {{CourseWebApiProject_HostAddress}}/auth/register
+Content-Type: application/json
+{
+  "login": {{admin}},
+  "password": {{adminpassword}},
+  "role": 1
+}
+
+### Admin login
+# @name login
+POST {{CourseWebApiProject_HostAddress}}/auth/login
+Content-Type: application/json
+{
+  "login": {{admin}},
+  "password": {{adminpassword}}
+}
+
 ### Get all events
 GET {{CourseWebApiProject_HostAddress}}/events/
+Authorization: Bearer {{login.response.body.*}}
 Accept: application/json
 
 ### Get events by query
 GET {{CourseWebApiProject_HostAddress}}/events?title={{title}}&from={{from}}&to={{to}}
+Authorization: Bearer {{login.response.body.*}}
 Content-Type: application/json
 
 ### Get events by page
 GET {{CourseWebApiProject_HostAddress}}/events?page={{page}}&pageSize={{pageSize}}
+Authorization: Bearer {{login.response.body.*}}
 Content-Type: application/json
 
-### Get event by id
-GET {{CourseWebApiProject_HostAddress}}/events/{{id}}
-Accept: application/json
-
 ### Create event
+# @name event
 POST {{CourseWebApiProject_HostAddress}}/events
+Authorization: Bearer {{login.response.body.*}}
 Content-Type: application/json
 {
   "title": "test event",
   "description": "",
-  "startAt": "2026-08-12T00:00:00Z",
-  "endAt": "2026-08-13T00:00:00Z",
-  "totalSeats": 3
+  "startAt": "2027-08-12T00:00:00Z",
+  "endAt": "2027-08-13T00:00:00Z",
+  "totalSeats": 20
 }
 
+### Get event by id
+GET {{CourseWebApiProject_HostAddress}}/events/{{event.response.body.$.id}}
+Authorization: Bearer {{login.response.body.*}}
+Accept: application/json
+
 ### Update event
-PUT {{CourseWebApiProject_HostAddress}}/events/{{id}}
+PUT {{CourseWebApiProject_HostAddress}}/events/{{event.response.body.$.id}}
+Authorization: Bearer {{login.response.body.*}}
 Content-Type: application/json
 {
   "title": "updated test event",
   "description": "updated description",
-  "startAt": "2027-01-01T00:00:00Z",
-  "endAt": "2027-01-01T00:01:00Z"
+  "startAt": "2028-01-01T00:00:00Z",
+  "endAt": "2028-01-01T00:01:00Z"
 }
 
 ### Delete event
-DELETE {{CourseWebApiProject_HostAddress}}/events/{{id}}
+DELETE {{CourseWebApiProject_HostAddress}}/events/{{event.response.body.$.id}}
+Authorization: Bearer {{login.response.body.*}}
 Accept: application/json
 
 ### Create booking
-POST {{CourseWebApiProject_HostAddress}}/events/{{id}}/book
+# @name booking
+POST {{CourseWebApiProject_HostAddress}}/events/{{event.response.body.$.id}}/book
+Authorization: Bearer {{login.response.body.*}}
 Accept: application/json
 
 ### Get booking by id
-GET {{CourseWebApiProject_HostAddress}}/bookings/{{id}}
+GET {{CourseWebApiProject_HostAddress}}/bookings/{{booking.response.body.$.id}}
+Authorization: Bearer {{login.response.body.*}}
+Accept: application/json
+
+### Cancel booking by id
+DELETE {{CourseWebApiProject_HostAddress}}/bookings/{{booking.response.body.$.id}}
+Authorization: Bearer {{login.response.body.*}}
 Accept: application/json
 
 ###

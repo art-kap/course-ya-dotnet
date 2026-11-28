@@ -1,4 +1,6 @@
-﻿namespace CourseWebApi.Domain.Entities;
+﻿using CourseWebApi.Domain.Exceptions;
+
+namespace CourseWebApi.Domain.Entities;
 
 public class Booking
 {
@@ -12,14 +14,16 @@ public class Booking
     public DateTime CreatedAt { get; private set; }
     public DateTime? ProcessedAt { get; private set; }
     public Event Event { get; private set; } = null!;
+    public Guid UserId { get; private set; }
+    public User User { get; private set; } = null!;
 
-
-    public static Booking Create(Guid eventId)
+    public static Booking Create(Guid eventId, Guid userId)
     {
         return new Booking
         {
             Id = Guid.NewGuid(),
             EventId = eventId,
+            UserId = userId,
             Status = BookingStatus.Pending,
             CreatedAt = DateTime.Now.ToUniversalTime(),
         };
@@ -27,13 +31,35 @@ public class Booking
 
     public void Confirm()
     {
-        Status = BookingStatus.Confirmed;
-        ProcessedAt = DateTime.Now.ToUniversalTime();
+        if (Status == BookingStatus.Pending)
+        {
+            Status = BookingStatus.Confirmed;
+            ProcessedAt = DateTime.Now.ToUniversalTime();
+        }
     }
 
     public void Reject()
     {
-        Status = BookingStatus.Rejected;
+        if (Status == BookingStatus.Pending)
+        {
+            Status = BookingStatus.Rejected;
+            ProcessedAt = DateTime.Now.ToUniversalTime();
+        }        
+    }
+
+    public void Cancel()
+    {
+        if (Status == BookingStatus.Cancelled)
+        {
+            throw new BookingIsAlreadyCancelledException(Id);
+        }
+
+        if (Status == BookingStatus.Rejected)
+        {
+            throw new BookingIsAlreadyRejectedException(Id);
+        }
+
+        Status = BookingStatus.Cancelled;
         ProcessedAt = DateTime.Now.ToUniversalTime();
     }
 }

@@ -24,7 +24,7 @@ public class BookingBackgroundService(IServiceScopeFactory scopeFactory, ILogger
             using (var scope = _scopeFactory.CreateScope())
             {
                 var bookingStore = scope.ServiceProvider.GetRequiredService<IBookingRepository>();
-                pendingBookings = await bookingStore.GetPending();
+                pendingBookings = await bookingStore.GetPending(stoppingToken);
             }
 
             var tasks = pendingBookings.Select(booking => ProcessBookingAsync(booking.Id, stoppingToken));
